@@ -17,7 +17,7 @@ def upload_file():
     user_id = session['user_id']
     file = request.files['file']
     file.save(file.filename)
-    print(f"User ID: {user_id}")
+    print("User ID: " + str(user_id))
     return 'File uploaded successfully.'
 
 @app.route('/download/<filename>', methods=['GET'])
@@ -25,7 +25,7 @@ def download_file(filename):
     if 'user_id' not in session:
         session['user_id'] = generate_user_id()  # Generate a unique user ID if not already present
     user_id = session['user_id']
-    print(f"User ID: {user_id}")
+    print("User ID: " + str(user_id))
     return send_file(filename, as_attachment=True)
 
 def generate_user_id():
@@ -35,7 +35,7 @@ def generate_user_id():
         session['user_counter'] = 0
     user_counter = session['user_counter']
     session['user_counter'] += 1
-    return f"user_{user_counter}"
+    return "user_" + str(user_counter)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
