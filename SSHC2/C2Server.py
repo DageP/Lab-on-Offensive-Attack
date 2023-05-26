@@ -42,7 +42,7 @@ class Server:
         """ Initialize server before the session. """
         try:
             # Binds the server to the port and listens to the port.
-            self.socket.bind(('localhost', self._port))
+            self.socket.bind(('', self._port))
             self.socket.listen()
             logging.debug('Server was successfully initialized.')
         except socket.error:

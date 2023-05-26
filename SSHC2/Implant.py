@@ -8,7 +8,7 @@ import base64
 import logging
 import socket
 import math
-from treasure_image import PIRATE
+# from treasure_image import PIRATE
 
 
 
