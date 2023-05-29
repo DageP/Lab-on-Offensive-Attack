@@ -30,7 +30,7 @@ class Server:
 
     @port.setter
     def port(self, new_port):
-        f""" Sets the port the server listens to into {new_port}"""
+        """ Sets the port the server listens to into {new_port}"""
         self._port = new_port
 
     @property
@@ -42,7 +42,7 @@ class Server:
         """ Initialize server before the session. """
         try:
             # Binds the server to the port and listens to the port.
-            self.socket.bind(('localhost', self._port))
+            self.socket.bind(('10.0.2.6', self._port))
             self.socket.listen()
             logging.debug('Server was successfully initialized.')
         except socket.error:

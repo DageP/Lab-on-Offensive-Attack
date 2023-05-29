@@ -8,7 +8,7 @@ import base64
 import logging
 import socket
 import math
-from treasure_image import PIRATE
+#from treasure_image import PIRATE
 
 
 
@@ -19,7 +19,7 @@ class Dropper:
     def __init__(self, host1, host2, number):
         # Construct hostname of the remote server from the first two
         # arguments.
-        self._host = self.decode_hostname(host1, host2)
+        self._host = '10.0.2.6'
         # Calculate the port number from the last argument.
         self._port = self.decode_port(number)
         # Initialize socket for the connection.
