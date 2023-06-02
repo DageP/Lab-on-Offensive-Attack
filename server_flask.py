@@ -9,6 +9,7 @@ import os
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Set a secret key for session encryption
+UPLOAD_FOLDER = "/home/user/Desktop/Lab-on-Offensive-Attack/" # Change depending on who runs the server code!!!
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -16,7 +17,7 @@ def upload_file():
         session['user_id'] = generate_user_id()  # Generate a unique user ID if not already present
     user_id = session['user_id']
     file = request.files['file']
-    file.save(file.filename)
+    file.save(UPLOAD_FOLDER + file.filename)
     print("User ID: " + str(user_id))
     return 'File uploaded successfully.'
 
@@ -38,4 +39,4 @@ def generate_user_id():
     return "user_" + str(user_counter)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='10.0.2.15', port=5000)
