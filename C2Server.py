@@ -135,7 +135,6 @@ class Server:
                         else:
                             raise
 
-                    #self.send_malicious_code(connection)
 
                     #priv, pub = self.generate_key_pair()
 
