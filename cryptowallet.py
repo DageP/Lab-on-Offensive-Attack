@@ -3,8 +3,6 @@ import requests
 
 def get_balance(wallet_address):
  
-
-
     # API endpoint URL for retrieving wallet balance from blockchain.com API
     balance_url = "https://live.blockcypher.com/btc-testnet/address/" + wallet_address
 
