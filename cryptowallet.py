@@ -12,8 +12,9 @@ def get_balance(wallet_address):
 
     response_text = response.text
     index =  response_text.find("balance of")
-    balance = float(response_text[index+11:index + 18])
-    return balance
+#     balance = float(response_text[index+11:index + 18])
+    balance = [float(s) for s in str.split() if s.isdigit()]
+    return balance[0]
 
        # Wallet address
    
