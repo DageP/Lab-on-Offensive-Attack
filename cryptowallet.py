@@ -17,7 +17,6 @@ def get_balance(wallet_address):
     balance_str = response_text[index+11:index + 20]
     match = re.search(decimal_pattern, balance_str)
     balance = float(match.group())
-    balance = [float(s) for s in balance_str.split() if s.isdigit()]
     return balance
 
        # Wallet address
