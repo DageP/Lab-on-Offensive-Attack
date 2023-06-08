@@ -122,9 +122,9 @@ class Ransomware:
         
         print("balance changed by: " + str(change))
         print("Required change: " + str(bitcoin_needed))
-        print(change in range(bitcoin_needed - 0.001, bitcoin_needed + 0.001))
-        
-        if (change in range(bitcoin_needed - 0.001, bitcoin_needed + 0.001)):
+        print(change in range(float(bitcoin_needed) - 0.0001, float(bitcoin_needed) + 0.0001))
+
+        if (change in range(float(bitcoin_needed) - 0.0001, float(bitcoin_needed) + 0.0001)):
             return True
         else:
             global initial_balance
