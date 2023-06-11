@@ -137,7 +137,7 @@ class Server:
 
 
     def check_if_user_paid(self, initial_bal):
-        """Checks if a user has paid, if somebody has paid then it returns their id, if nobody has it returns null."""
+        """Checks if a user has paid, if somebody has paid then it returns true, if nobody has it returns false."""
         current_balance = self.get_balance(WALLET_ADDRESS)
         change = current_balance - initial_bal
         
